@@ -655,7 +655,16 @@
         }
         
         function formatTime(ms) { return `${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor((Math.max(0,ms)%60000)/1000).toString().padStart(2,'0')}`; }
-        function showMessage(t) { document.getElementById('modal-text').textContent = t; document.getElementById('message-modal').classList.remove('hidden'); }
+        function showMessage(t) {
+    // Aggiungi questo controllo per sopprimere lo specifico errore di connessione
+    if (t === 'Errore Connessione.') {
+        console.log("Messaggio 'Errore Connessione.' soppresso.");
+        return; // Esce dalla funzione senza mostrare il modale
+    }
+    
+    document.getElementById('modal-text').textContent = t; 
+    document.getElementById('message-modal').classList.remove('hidden'); 
+}
         
         // --- STAT CALCS ---
         function getQuarterOffset(q) {

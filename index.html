@@ -450,6 +450,26 @@
     </div>
 
     <script type="module">
+        // --- FIX iPad / touch ---
+// Gestisce tap su iPad senza duplicare eventi (touch + click)
+function addTapListener(element, handler) {
+  let touchStarted = false;
+
+  element.addEventListener("touchstart", () => {
+    touchStarted = true;
+  });
+
+  element.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    handler(e);
+    setTimeout(() => (touchStarted = false), 50);
+  });
+
+  element.addEventListener("click", (e) => {
+    if (!touchStarted) handler(e);
+  });
+}
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";

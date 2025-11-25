@@ -88,7 +88,11 @@
         
         <header class="flex justify-between items-center mb-3 py-2 flex-shrink-0">
             <div><h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white tracking-tight">🏀 Rotation <span class="text-blue-600">Pro</span> (Offline)</h1></div>
+            
             <div class="flex items-center space-x-3">
+                <button onclick="exportToCSV()" class="p-2 rounded-full bg-blue-600 dark:bg-blue-700 text-white shadow-sm hover:shadow-md transition active:scale-95 text-xs font-bold uppercase" title="Esporta Statistiche in CSV">
+                    CSV
+                </button>
                 <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-yellow-400 shadow-sm hover:shadow-md transition">
                     <svg id="sun-icon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     <svg id="moon-icon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -139,7 +143,7 @@
                 
                 <div class="flex gap-2 w-full sm:w-auto order-3 sm:order-1 justify-center">
                     <button id="start-pause-btn" onclick="toggleTimer()" class="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-md active:transform active:scale-95 transition w-28">Avvia</button>
-                    <button onclick="exportToCSV()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-md active:transform active:scale-95 transition w-28">Esporta CSV</button>
+                    <button onclick="showSetupOrGame(false); clearInterval(timerInterval); gameState.isRunning = false;" class="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl shadow-md active:transform active:scale-95 transition w-28">Reset</button>
                 </div>
             </div>
             
@@ -348,7 +352,8 @@
         
         function formatTime(ms) { return `${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor((Math.max(0,ms)%60000)/1000).toString().padStart(2,'0')}`; }
         function showMessage(t) { document.getElementById('modal-text').textContent = t; document.getElementById('message-modal').classList.remove('hidden'); }
-        function toggleTheme() {
+        
+        globalThis.toggleTheme = () => {
             const d = document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', d?'dark':'light');
             document.getElementById('sun-icon').classList.toggle('hidden', !d);
@@ -410,7 +415,7 @@
             return Math.max(0, absCurrentTime - lastExitAbsTime);
         }
 
-        // NUOVA FUNZIONE PER ESPORTARE IN CSV
+        // FUNZIONE PER ESPORTARE IN CSV
         function exportToCSV() {
             const data = gameState.players;
             if (data.length === 0) return showMessage("Nessun dato da esportare.");

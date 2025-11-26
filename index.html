@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rotation Tracker Pro (Offline)</title>
+    <title>Rotazioni Basket</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏀</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,7 +15,7 @@
     </script>
 
     <style>
-        /* INCLUSIONE DEL FONT DA FILE TTF */
+        /* INCLUSIONE DEL FONT DS-Digital */
         /* Nota: per vedere il font 'DS-Digital', assicurati che il file 'DS-DIGII.TTF' sia nella stessa cartella del file HTML. */
         @font-face {
             font-family: 'DS-Digital';
@@ -66,7 +66,7 @@
         .selected-card { ring-width: 3px; ring-color: #fbbf24; transform: scale(1.02); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); border-color: #fbbf24 !important; z-index: 20; }
         .court-number { color: #fbbf24; font-size: 1.6rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         
-        /* TIMER FONT MODIFICATO E COLORE ROSSO FISSO */
+        /* TIMER FONT DIGITALE E COLORE ROSSO FISSO */
         .timer-display { 
             font-family: 'DS-Digital', 'Courier New', monospace; 
             font-weight: 700; 
@@ -87,10 +87,17 @@
 
     <div class="max-w-7xl mx-auto w-full flex flex-col h-full safe-area-padding">
         
-        <header class="flex justify-between items-center mb-3 py-2 flex-shrink-0">
-            <div><h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white tracking-tight">🏀 Rotation <span class="text-blue-600">Pro</span> (Offline)</h1></div>
+        <header class="flex justify-between items-center mb-3 py-2 flex-shrink-0 flex-wrap gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-1">
+                <div><h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white tracking-tight">🏀 Rotazioni <span class="text-blue-600">Pro</span></h1></div>
+
+                <div class="mt-2 sm:mt-0 flex items-center">
+                    <label for="opponent-name" class="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0">Avversaria:</label>
+                    <input type="text" id="opponent-name" placeholder="Nome Squadra Avversaria" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white font-medium text-sm py-1 px-2 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none w-full max-w-xs">
+                </div>
+            </div>
             
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-3 order-last">
                 <button onclick="exportToCSV()" class="p-2 rounded-full bg-blue-600 dark:bg-blue-700 text-white shadow-sm hover:shadow-md transition active:scale-95 text-xs font-bold uppercase" title="Esporta Statistiche in CSV">
                     CSV
                 </button>
@@ -208,7 +215,17 @@
                     else { showSetupOrGame(false); }
                 } catch(e) { console.error("Err loading", e); showSetupOrGame(false); }
             } else { showSetupOrGame(false); }
-            if(localStorage.getItem('theme')==='dark') toggleTheme();
+            if(localStorage.getItem('theme')==='dark') toggleTheme(false); // Pass false to prevent saving again
+            
+            // Inizializza il campo avversario, se salvato in localStorage
+            const savedOpponentName = localStorage.getItem('opponentName');
+            if (savedOpponentName) {
+                document.getElementById('opponent-name').value = savedOpponentName;
+            }
+            // Aggiungi listener per salvare il nome avversario al cambiamento
+            document.getElementById('opponent-name').addEventListener('input', (e) => {
+                localStorage.setItem('opponentName', e.target.value.trim());
+            });
         };
 
         function saveGameState() {
@@ -354,9 +371,9 @@
         function formatTime(ms) { return `${Math.floor(Math.max(0,ms)/60000).toString().padStart(2,'0')}:${Math.floor((Math.max(0,ms)%60000)/1000).toString().padStart(2,'0')}`; }
         function showMessage(t) { document.getElementById('modal-text').textContent = t; document.getElementById('message-modal').classList.remove('hidden'); }
         
-        globalThis.toggleTheme = () => {
+        globalThis.toggleTheme = (save=true) => {
             const d = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', d?'dark':'light');
+            if(save) localStorage.setItem('theme', d?'dark':'light');
             document.getElementById('sun-icon').classList.toggle('hidden', !d);
             document.getElementById('moon-icon').classList.toggle('hidden', d);
         }
@@ -462,8 +479,9 @@
             if (link.download !== undefined) { 
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
+                const opponentName = document.getElementById('opponent-name').value.trim() || 'Avversario';
                 const currentTime = formatTime(QUARTER_DURATIONS_MS[gameState.currentQuarter] - gameState.remainingTime).replace(':', '');
-                link.setAttribute("download", `Rotazioni_${gameState.currentQuarter}_${currentTime}.csv`);
+                link.setAttribute("download", `Rotazioni_${opponentName}_${gameState.currentQuarter}_${currentTime}.csv`);
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
@@ -481,7 +499,7 @@
             
             const td = document.getElementById('timer-display');
             td.textContent = formatTime(gameState.remainingTime);
-            // MODIFICATO: Rimosse le classi di colore del testo, ora gestito in CSS
+            // Il colore rosso fisso è gestito dal CSS .timer-display
             td.className = `timer-display ${gameState.remainingTime===0?'text-red-600':''} tabular-nums`;
             document.getElementById('quarter-select').value = gameState.currentQuarter;
 

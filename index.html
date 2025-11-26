@@ -380,13 +380,24 @@
             const remainingNew = gameState.quarterTimes[newQ] || durationNew;
             const elapsedNew = durationNew - remainingNew;
 
-            gameState.players.filter(p=>p.status==='court').forEach(p => {
-                const perf = getPerf(p, gameState.currentQuarter);
-                // Apre una rotazione se non ce n'è una aperta (end === null)
-                if(!perf.rotations.length || perf.rotations.at(-1).end !== null) {
-                    perf.rotations.push({start:elapsedNew, end:null});
-                }
-            });
+            // *** CORREZIONE BUG: APRI UNA ROTAZIONE SOLO SE IL QUARTO NON È FINITO ***
+            if (remainingNew > 0) {
+                gameState.players.filter(p=>p.status==='court').forEach(p => {
+                    const perf = getPerf(p, gameState.currentQuarter);
+                    // Apre una rotazione se non ce n'è una aperta (end === null)
+                    if(!perf.rotations.length || perf.rotations.at(-1).end !== null) {
+                        perf.rotations.push({start:elapsedNew, end:null});
+                    }
+                });
+            } else {
+                 // Se il quarto è finito (remainingNew === 0), assicurati che non ci siano rotazioni aperte
+                 gameState.players.filter(p=>p.status==='court').forEach(p => {
+                    const perf = getPerf(p, gameState.currentQuarter);
+                    if(perf.rotations.length && perf.rotations.at(-1).end === null) {
+                        perf.rotations.at(-1).end = elapsedNew;
+                    }
+                 });
+            }
 
             saveGameState(); updateUI();
         }

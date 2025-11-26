@@ -380,7 +380,8 @@
             const remainingNew = gameState.quarterTimes[newQ] || durationNew;
             const elapsedNew = durationNew - remainingNew;
 
-            // *** CORREZIONE BUG: APRI UNA ROTAZIONE SOLO SE IL QUARTO NON È FINITO ***
+            // CORREZIONE BUG: Apri una rotazione SOLO se il quarto NON È FINITO.
+            // Se è finito (remainingNew === 0), la rotazione per quel quarto è fissa (invariata).
             if (remainingNew > 0) {
                 gameState.players.filter(p=>p.status==='court').forEach(p => {
                     const perf = getPerf(p, gameState.currentQuarter);
@@ -389,15 +390,9 @@
                         perf.rotations.push({start:elapsedNew, end:null});
                     }
                 });
-            } else {
-                 // Se il quarto è finito (remainingNew === 0), assicurati che non ci siano rotazioni aperte
-                 gameState.players.filter(p=>p.status==='court').forEach(p => {
-                    const perf = getPerf(p, gameState.currentQuarter);
-                    if(perf.rotations.length && perf.rotations.at(-1).end === null) {
-                        perf.rotations.at(-1).end = elapsedNew;
-                    }
-                 });
             }
+            // NOTA: Il blocco 'else' precedente è stato rimosso per prevenire la modifica 
+            // delle statistiche di un quarto finito.
 
             saveGameState(); updateUI();
         }
@@ -419,6 +414,12 @@
         }
 
         function handleSubstitution(p, oldS, newS) {
+            // *** CORREZIONE BUG ***: Blocca qualsiasi modifica alle rotazioni se il quarto è finito.
+            if (getRemainingTime() <= 0) {
+                // Il cambio è solo visivo, le statistiche del quarto finito sono invariate.
+                return;
+            }
+
             const elapsed = getQuarterDuration() - getRemainingTime();
             const perf = getPerf(p, gameState.currentQuarter);
             if (oldS === 'court') { if(perf.rotations.length && perf.rotations.at(-1).end === null) perf.rotations.at(-1).end = elapsed; } 
@@ -448,8 +449,14 @@
                 if (end === null) { 
                     if (qCode === gameState.currentQuarter && p.status === 'court') {
                         end = elapsed; // Usa il tempo trascorso
+                    } else if (remaining === 0) {
+                        // *** CORREZIONE CRITICA PER QUARTI FINITI ***
+                        // Se la rotazione è aperta in un quarto che ha 0:00 (e non è il corrente),
+                        // significa che è rimasta incastrata. Per evitare i ghost minutes,
+                        // trattiamo il tempo giocato come 0 (r.start === end)
+                        end = r.start; 
                     } else {
-                        // Se la rotazione è aperta in un quarto non corrente (es. passato), usiamo il tempo effettivo giocato
+                        // Rotazione aperta in un quarto non corrente ma non finito (salto manuale)
                         end = elapsed; 
                     }
                 }
@@ -462,11 +469,13 @@
             let tot = 0, currentCons = 0;
             const currentQDuration = getQuarterDuration();
             const currentQElapsed = currentQDuration - getRemainingTime();
+            const currentQRemaining = getRemainingTime();
 
             p.performance.forEach(perf => {
                 const qd = getQuarterDuration(perf.quarter);
-                // Calcola il tempo trascorso per quel quarto (se non è il corrente)
-                const quarterElapsed = qd - (gameState.quarterTimes[perf.quarter] || 0);
+                
+                const quarterRemaining = gameState.quarterTimes[perf.quarter] || 0;
+                const quarterElapsed = qd - quarterRemaining;
 
                 perf.rotations.forEach(r => {
                     const isCurrentActive = (p.status === 'court' && r.end === null && perf.quarter === gameState.currentQuarter);
@@ -477,8 +486,15 @@
                     } else if (r.end !== null) {
                         end = r.end;
                     } else {
-                        // Rotazione aperta in un quarto non corrente. Consideriamo il tempo effettivo giocato in quel quarto.
-                        end = quarterElapsed; 
+                        // Rotazione aperta in un quarto non corrente
+                        if (perf.quarter !== gameState.currentQuarter && quarterRemaining === 0) {
+                            // *** CORREZIONE CRITICA ***: Rotazione aperta in un quarto passato e FINITO.
+                            // Preveniamo l'aggiunta di 10 minuti di tempo fantasma.
+                            end = r.start;
+                        } else {
+                            // Rotazione aperta in un quarto non corrente ma NON FINITO (e.g. salto manuale)
+                            end = quarterElapsed; 
+                        }
                     }
                     
                     if(end != null && r.start <= end) tot += (end - r.start);
@@ -486,7 +502,7 @@
             });
 
             // Calcolo del tempo consecutivo
-            if(p.status === 'court') {
+            if(p.status === 'court' && currentQRemaining > 0) {
                 const perf = getPerf(p, gameState.currentQuarter);
                 if(perf.rotations.length && perf.rotations.at(-1).end === null) currentCons = currentQElapsed - perf.rotations.at(-1).start;
             }
@@ -505,6 +521,8 @@
                 if (p.rotations.length > 0) {
                     const lastRot = p.rotations[p.rotations.length - 1];
                     if (lastRot.end !== null) { lastExitAbsTime = getQuarterOffset(p.q) + lastRot.end; break; }
+                    // Se la rotazione è aperta, ma il quarto è finito (tempo restante 0), consideriamo l'uscita come la fine del quarto.
+                    if (gameState.quarterTimes[p.q] === 0) { lastExitAbsTime = getQuarterOffset(p.q) + getQuarterDuration(p.q); break; }
                 }
             }
             return Math.max(0, absCurrentTime - lastExitAbsTime);
@@ -531,7 +549,9 @@
         function processDrop(pid, newStatus) {
             const p = gameState.players.find(x => x.id === pid);
             if (!p || p.status === newStatus) return;
-            if (newStatus === 'court' && gameState.players.filter(x => x.status === 'court').length >= 5) return showMessage("Massimo 5 in campo!");
+            // Solo se il quarto NON è finito, si applica il limite di 5 in campo
+            if (getRemainingTime() > 0 && newStatus === 'court' && gameState.players.filter(x => x.status === 'court').length >= 5) return showMessage("Massimo 5 in campo!");
+            
             p.status = newStatus;
             handleSubstitution(p, newStatus==='court'?'bench':'court', newStatus);
             saveGameState(); updateUI();
@@ -545,6 +565,16 @@
                 const bench = p1.status === 'bench' ? p1 : p2;
                 const court = p1.status === 'bench' ? p2 : p1;
                 bench.status = 'court'; court.status = 'bench';
+                
+                // Limite di 5 solo se il quarto non è finito
+                if (getRemainingTime() > 0 && gameState.players.filter(x => x.status === 'court').length > 5) {
+                    showMessage("Swap annullato: limite 5 in campo superato.");
+                    bench.status = 'bench'; // Riporta al vecchio stato per coerenza
+                    court.status = 'court';
+                    saveGameState(); updateUI();
+                    return;
+                }
+
                 handleSubstitution(court, 'court', 'bench'); handleSubstitution(bench, 'bench', 'court');
                 saveGameState(); updateUI();
             } else { showMessage("Scambio valido solo Campo <-> Panchina."); selectedPlayerId = null; updateUI(); }

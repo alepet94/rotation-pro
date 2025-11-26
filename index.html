@@ -191,8 +191,8 @@
         const NEXT_QUARTER = { 'Q1': 'Q2', 'Q2': 'Q3', 'Q3': 'Q4', 'Q4': 'OT', 'OT': '2OT' };
         const DEFAULT_QUARTER = 'Q1';
         
-        // CHIAVE DI SALVATAGGIO MODIFICATA (v3 - Aggiunto salvataggio Multi-Quarter)
-        const STORAGE_KEY = 'basket_rotation_local_v3'; 
+        // CHIAVE DI SALVATAGGIO MODIFICATA (v4 - Fix bug switch quarti)
+        const STORAGE_KEY = 'basket_rotation_local_v4'; 
 
         // Ristrutturato gameState per gestire i tempi di tutti i quarti
         let gameState = { players: [], isRunning: false, lastUpdateTime: 0, currentQuarter: DEFAULT_QUARTER, quarterTimes: {} };
@@ -380,9 +380,9 @@
             const remainingNew = gameState.quarterTimes[newQ] || durationNew;
             const elapsedNew = durationNew - remainingNew;
 
-            // CORREZIONE BUG: Apri una rotazione SOLO se il quarto NON È FINITO.
-            // Se è finito (remainingNew === 0), la rotazione per quel quarto è fissa (invariata).
+            // *** FIX CRITICO: Gestione del Quarto Destinazione ***
             if (remainingNew > 0) {
+                // Il quarto non è finito, apri la rotazione se il giocatore è in campo.
                 gameState.players.filter(p=>p.status==='court').forEach(p => {
                     const perf = getPerf(p, gameState.currentQuarter);
                     // Apre una rotazione se non ce n'è una aperta (end === null)
@@ -390,9 +390,17 @@
                         perf.rotations.push({start:elapsedNew, end:null});
                     }
                 });
+            } else {
+                 // Il quarto è FINITO (remainingNew === 0). Chiudi forzatamente qualsiasi rotazione aperta
+                 // in questo quarto. Questo congela i minuti a 10:00 (o 5:00 per OT) e previene i ricalcoli errati.
+                 gameState.players.forEach(p => { // Controlla TUTTI i giocatori
+                    const perf = getPerf(p, gameState.currentQuarter);
+                    if(perf.rotations.length && perf.rotations.at(-1).end === null) {
+                        // Chiudi al tempo massimo trascorso (elapsedNew è la durata completa, es. 600000ms)
+                        perf.rotations.at(-1).end = elapsedNew; 
+                    }
+                 });
             }
-            // NOTA: Il blocco 'else' precedente è stato rimosso per prevenire la modifica 
-            // delle statistiche di un quarto finito.
 
             saveGameState(); updateUI();
         }
@@ -403,6 +411,7 @@
         function updateRotationEndTimes(elapsed) {
             gameState.players.filter(p => p.status === 'court').forEach(p => {
                 const perf = getPerf(p, gameState.currentQuarter);
+                // Chiudi solo se è effettivamente aperta
                 if(perf.rotations.length && perf.rotations.at(-1).end === null) perf.rotations.at(-1).end = elapsed;
             });
         }
@@ -414,7 +423,7 @@
         }
 
         function handleSubstitution(p, oldS, newS) {
-            // *** CORREZIONE BUG ***: Blocca qualsiasi modifica alle rotazioni se il quarto è finito.
+            // *** MANTENUTO: Blocca qualsiasi modifica alle rotazioni se il quarto è finito. ***
             if (getRemainingTime() <= 0) {
                 // Il cambio è solo visivo, le statistiche del quarto finito sono invariate.
                 return;
@@ -445,15 +454,14 @@
 
             perf.rotations.forEach(r => {
                 let end = r.end;
-                // Se è il quarto corrente e la rotazione è aperta
+                // Se la rotazione è aperta
                 if (end === null) { 
+                    // Se è il quarto corrente E il giocatore è in campo, usa il tempo trascorso
                     if (qCode === gameState.currentQuarter && p.status === 'court') {
-                        end = elapsed; // Usa il tempo trascorso
+                        end = elapsed; 
                     } else if (remaining === 0) {
-                        // *** CORREZIONE CRITICA PER QUARTI FINITI ***
-                        // Se la rotazione è aperta in un quarto che ha 0:00 (e non è il corrente),
-                        // significa che è rimasta incastrata. Per evitare i ghost minutes,
-                        // trattiamo il tempo giocato come 0 (r.start === end)
+                        // Rotazione aperta in un quarto che ha 0:00 (e non è il corrente o è stato forzato chiuso nel changeQuarter)
+                        // Per sicurezza, se è aperta e il quarto è FINITO, il tempo giocato è 0 (start=end)
                         end = r.start; 
                     } else {
                         // Rotazione aperta in un quarto non corrente ma non finito (salto manuale)
@@ -468,8 +476,8 @@
         function calcGameStats(p) {
             let tot = 0, currentCons = 0;
             const currentQDuration = getQuarterDuration();
-            const currentQElapsed = currentQDuration - getRemainingTime();
             const currentQRemaining = getRemainingTime();
+            const currentQElapsed = currentQDuration - currentQRemaining;
 
             p.performance.forEach(perf => {
                 const qd = getQuarterDuration(perf.quarter);
@@ -486,10 +494,9 @@
                     } else if (r.end !== null) {
                         end = r.end;
                     } else {
-                        // Rotazione aperta in un quarto non corrente
+                        // Rotazione aperta in un quarto non corrente (dovrebbe essere stata chiusa dal fix in changeQuarter)
                         if (perf.quarter !== gameState.currentQuarter && quarterRemaining === 0) {
-                            // *** CORREZIONE CRITICA ***: Rotazione aperta in un quarto passato e FINITO.
-                            // Preveniamo l'aggiunta di 10 minuti di tempo fantasma.
+                            // Rotazione aperta in un quarto passato e FINITO. Preveniamo l'aggiunta di tempo fantasma.
                             end = r.start;
                         } else {
                             // Rotazione aperta in un quarto non corrente ma NON FINITO (e.g. salto manuale)

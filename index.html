@@ -66,13 +66,14 @@
         .selected-card { ring-width: 3px; ring-color: #fbbf24; transform: scale(1.02); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); border-color: #fbbf24 !important; z-index: 20; }
         .court-number { color: #fbbf24; font-size: 1.6rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         
-        /* TIMER FONT MODIFICATO */
+        /* TIMER FONT MODIFICATO E COLORE ROSSO FISSO */
         .timer-display { 
             font-family: 'DS-Digital', 'Courier New', monospace; 
             font-weight: 700; 
             font-size: 3rem; 
             line-height: 1; 
             letter-spacing: -2px; 
+            color: #ef4444; /* Red-500 (rosso) */
         }
 
         .custom-scroll::-webkit-scrollbar { width: 6px; }
@@ -124,11 +125,11 @@
             
             <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm mb-4 flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 border border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div class="flex-1 text-center sm:text-left order-1 sm:order-2 flex justify-center items-center gap-3">
-                    <button onclick="adjustTime(-30000)" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white font-bold shadow-sm transition active:scale-95 flex items-center justify-center text-xs">-30"</button>
-                    <div class="bg-gray-100 dark:bg-gray-900 px-6 py-2 rounded-xl border border-gray-200 dark:border-gray-700 inline-block min-w-[200px]">
-                        <span id="timer-display" class="timer-display text-white tabular-nums">10:00</span>
-                    </div>
                     <button onclick="adjustTime(30000)" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white font-bold shadow-sm transition active:scale-95 flex items-center justify-center text-xs">+30"</button>
+                    <div class="bg-gray-100 dark:bg-gray-900 px-6 py-2 rounded-xl border border-gray-200 dark:border-gray-700 inline-block min-w-[200px]">
+                        <span id="timer-display" class="timer-display tabular-nums">10:00</span>
+                    </div>
+                    <button onclick="adjustTime(-30000)" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white font-bold shadow-sm transition active:scale-95 flex items-center justify-center text-xs">-30"</button>
                 </div>
 
                 <div class="w-full sm:w-auto order-2 sm:order-3">
@@ -480,7 +481,8 @@
             
             const td = document.getElementById('timer-display');
             td.textContent = formatTime(gameState.remainingTime);
-            td.className = `timer-display ${gameState.remainingTime===0?'text-red-600':(document.documentElement.classList.contains('dark')?'text-white':'text-gray-900')} tabular-nums`;
+            // MODIFICATO: Rimosse le classi di colore del testo, ora gestito in CSS
+            td.className = `timer-display ${gameState.remainingTime===0?'text-red-600':''} tabular-nums`;
             document.getElementById('quarter-select').value = gameState.currentQuarter;
 
             const ca = document.getElementById('court-area'), ba = document.getElementById('bench-area'), sa = document.getElementById('total-stats-area');

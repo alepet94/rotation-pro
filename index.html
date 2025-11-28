@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rotazioni Basket Pro (PMI Real-Time)</title>
+    <title>Rotazioni Basket Pro</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏀</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,6 +15,7 @@
     </script>
 
     <style>
+        /* INCLUSIONE DEL FONT DS-Digital - Assicurati che DS-DIGII.TTF sia presente */
         @font-face {
             font-family: 'DS-Digital';
             src: url('DS-DIGII.TTF') format('truetype');
@@ -77,6 +78,7 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         .is-dragging { opacity: 0.5; transform: scale(0.95); }
+        /* Rimosso lo stile stats-row:nth-child(even) per coerenza con il nuovo layout multi-tabella */
     </style>
 </head>
 <body class="p-2 sm:p-6 bg-gray-100 dark:bg-gray-900 select-none h-screen flex flex-col">
@@ -155,7 +157,7 @@
                 <div class="lg:col-span-3 flex flex-col min-h-0 order-2 lg:order-1">
                     <div class="bg-white dark:bg-gray-800 rounded-t-xl p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                         <h2 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-sm tracking-wider">Panchina</h2>
-                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500">Tocca/Trascina</span>
+                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500">Tocca</span>
                     </div>
                     <div id="bench-area" class="bench-area p-3 rounded-b-xl flex-1 overflow-y-auto custom-scroll grid grid-cols-2 lg:grid-cols-1 gap-3 content-start shadow-inner" ondrop="handleDrop(event)" ondragover="allowDrop(event)" onclick="handleAreaClick('bench')"></div>
                 </div>
@@ -188,9 +190,10 @@
         const NEXT_QUARTER = { 'Q1': 'Q2', 'Q2': 'Q3', 'Q3': 'Q4', 'Q4': 'OT', 'OT': '2OT' };
         const DEFAULT_QUARTER = 'Q1';
         
-        // CHIAVE DI SALVATAGGIO MODIFICATA (v8 - Aggiunta Real Time per PMI)
-        const STORAGE_KEY = 'basket_rotation_local_v8'; 
+        // CHIAVE DI SALVATAGGIO MODIFICATA (v7 - Aggiunta PMI)
+        const STORAGE_KEY = 'basket_rotation_local_v7'; 
 
+        // Ristrutturato gameState per gestire i tempi di tutti i quarti
         let gameState = { players: [], isRunning: false, lastUpdateTime: 0, currentQuarter: DEFAULT_QUARTER, quarterTimes: {} };
         let timerInterval = null;
         let selectedPlayerId = null;
@@ -218,74 +221,70 @@
         
         // --- PMI (Performance Metric of Intensity) CALCS ---
         
+        // Nuova funzione di formattazione per il PMI (Punteggio in minuti con 2 decimali)
         function formatPMI(ms) {
+            // La formula PMI produce un risultato in millisecondi che deve essere convertito in minuti con 2 decimali.
             const minutes = ms / 60000;
             return minutes.toFixed(2);
         }
 
-        // Calcola il PMI Score utilizzando il Tempo di Gioco (minG) e il Tempo Reale (minT)
+        // Nuova metrica PMI: Performance Metric of Intensity (Indicatore di Densità)
+        // Score = minG + (minG * stintD) dove stintD = minG / minT
         function calcPMI(p, q) {
             const perf = getPerf(p, q);
             if (!perf || !perf.rotations.length) return 0;
             
             let totalPMI_ms = 0;
-            const quarterDuration = getQuarterDuration(q);
+            const quarterDuration = QUARTER_DURATIONS_MS[q] || 0;
+            
+            // Calcola il tempo trascorso (elapsed) nel quarto corrente o nel quarto storico
             const remaining = gameState.quarterTimes[q] || quarterDuration;
             const elapsed = quarterDuration - remaining;
-            const now = Date.now(); 
 
-            const rotations = perf.rotations;
+            for (let i = 0; i < perf.rotations.length; i++) {
+                const rotation = perf.rotations[i];
+                const Si = rotation.start; 
+                let Ei = rotation.end;       
+                let Ni = null;               
 
-            for (let i = 0; i < rotations.length; i++) {
-                const rotation = rotations[i];
-                
-                const gcStart = rotation.gcStart;
-                const rtStart = rotation.rtStart;
-                let gcEnd = rotation.gcEnd;
-                let rtEnd = rotation.rtEnd;
-                
-                // --- 1. Determina End Times (GC/RT) per la rotazione corrente (i) ---
-                if (gcEnd === null) {
-                    // Stint APERTO: Valido solo per il quarto corrente e se il giocatore è in campo
+                // 1. Determina Ei (End Time) per calcolare minG
+                if (Ei === null) {
                     if (q === gameState.currentQuarter && p.status === 'court') {
-                        gcEnd = elapsed; 
-                        rtEnd = now;     
+                        Ei = elapsed; // Stint in corso nel quarto corrente
+                    } else if (remaining === 0) {
+                        Ei = quarterDuration; // Stint aperto in un quarto che è finito
                     } else {
-                        // Stint aperto in un quarto passato/saltato. Non possiamo calcolare un minT Real Time valido.
-                        continue; 
+                        Ei = elapsed; // Stint aperto in un quarto non corrente ma non finito (uso tempo trascorso)
                     }
                 }
                 
-                // minG: Tempo Giocato (Game Clock difference)
-                const minG = Math.max(0, gcEnd - gcStart);
+                const minG = Math.max(0, Ei - Si); // minG: Tempo Giocato (ms)
+
                 if (minG <= 0) continue; 
 
-                // --- 2. Determina minT (Durata del Ciclo Lavoro/Recupero in Real Time) ---
-                let minT = 0; 
-                
-                if (i < rotations.length - 1) {
-                    // Caso 1: È avvenuta una sostituzione (esiste la rotazione successiva)
-                    // Il ciclo finisce all'inizio (rtStart) della rotazione successiva
-                    const nextRotation = rotations[i + 1];
-                    minT = Math.max(minG, nextRotation.rtStart - rtStart);
+                // 2. Determina Ni (Next Start) per calcolare minT
+                if (i < perf.rotations.length - 1) {
+                    // Ni è l'inizio della prossima rotazione (fine del ciclo)
+                    Ni = perf.rotations[i + 1].start; 
                 } else {
-                    // Caso 2: Ultimo stint del quarto (o in corso)
-                    // Il ciclo finisce quando finisce lo stint (rtEnd)
-                    if (rtEnd !== null) {
-                        minT = Math.max(minG, rtEnd - rtStart);
+                    // Ultimo stint del quarto. minT termina alla fine del quarto, o al tempo attuale (se aperto)
+                    if (Ei < quarterDuration) {
+                        Ni = Ei; // Se lo stint è chiuso, il ciclo finisce lì (minT=minG)
                     } else {
-                        // Non dovrebbe succedere data la logica in Step 1, ma per sicurezza, saltiamo
-                        continue;
+                        Ni = quarterDuration; // Se è aperto o finito alla fine del quarto, usa fine quarto
                     }
                 }
-                
-                // stintD = minG / minT (stintD = Lavoro su Ciclo)
+
+                // minT è il tempo trascorso da quando il giocatore è entrato (Si) fino alla sua uscita (Ei)
+                // O il tempo fino all'inizio del prossimo stint (Ni).
+                const minT = Math.max(minG, Ni - Si); // minT: Tempo Totale Ciclo (minG + riposo_interno)
+
                 let stintD = 0;
                 if (minT > 0) {
                     stintD = minG / minT;
                 }
 
-                // PMI Score = minG + (minG * stintD)
+                // Score = minG + (minG * stintD)
                 const stintPMI_ms = minG + (minG * stintD);
                 totalPMI_ms += stintPMI_ms;
             }
@@ -309,15 +308,16 @@
             if (saved) {
                 try {
                     const loaded = JSON.parse(saved);
-                    // Rimuove la chiave 'lastUpdateTime' se presente e non la usa per riprendere il timer
                     gameState = {
                         players: loaded.players || [],
                         isRunning: false, 
+                        // Ora carica quarterTimes o lo inizializza
                         quarterTimes: loaded.quarterTimes || {}, 
                         lastUpdateTime: 0,
                         currentQuarter: loaded.currentQuarter || DEFAULT_QUARTER
                     };
                     
+                    // Se quarterTimes non è completo, lo riempiamo con i valori di default
                     if (Object.keys(gameState.quarterTimes).length === 0) {
                         QUARTER_ORDER.forEach(q => { gameState.quarterTimes[q] = QUARTER_DURATIONS_MS[q] || 0; });
                     }
@@ -328,10 +328,12 @@
             } else { showSetupOrGame(false); }
             if(localStorage.getItem('theme')==='dark') toggleTheme(false); 
             
+            // Inizializza il campo avversario, se salvato in localStorage
             const savedOpponentName = localStorage.getItem('opponentName');
             if (savedOpponentName) {
                 document.getElementById('opponent-name').value = savedOpponentName;
             }
+            // Aggiungi listener per salvare il nome avversario al cambiamento
             document.getElementById('opponent-name').addEventListener('input', (e) => {
                 localStorage.setItem('opponentName', e.target.value.trim());
             });
@@ -351,8 +353,6 @@
             const txt = document.getElementById('player-input').value.trim();
             if (!txt) return showMessage("Inserisci giocatori.");
             const lines = txt.split('\n').filter(l => l.trim());
-            const now = Date.now(); // Real Time Start della partita
-            
             gameState.players = lines.map((l, i) => {
                 const m = l.match(/^(\d+)[.\s]+\s*(.*)/);
                 const numStr = m ? m[1] : (i + 1).toString();
@@ -361,21 +361,12 @@
             });
             gameState.currentQuarter = DEFAULT_QUARTER; 
             
+            // NUOVA INIZIALIZZAZIONE TEMPI: tutti i quarti partono dalla loro durata massima
             gameState.quarterTimes = {};
             QUARTER_ORDER.forEach(q => { gameState.quarterTimes[q] = QUARTER_DURATIONS_MS[q] || 0; });
 
             gameState.isRunning = false; gameState.lastUpdateTime = 0;
-            
-            // Inizializza la tracciabilità GC/RT per i giocatori in campo
-            gameState.players.filter(p => p.status === 'court').forEach(p => p.performance = [{ 
-                quarter: DEFAULT_QUARTER, 
-                rotations: [{ 
-                    gcStart: 0, 
-                    gcEnd: null,
-                    rtStart: now, // Registra il Real Time Start
-                    rtEnd: null
-                }] 
-            }]);
+            gameState.players.filter(p => p.status === 'court').forEach(p => p.performance = [{ quarter: DEFAULT_QUARTER, rotations: [{ start: 0, end: null }] }]);
             saveGameState(); showSetupOrGame(true); updateUI();
         }
 
@@ -384,14 +375,8 @@
         function toggleTimer() {
             if (getRemainingTime() <= 0) { showMessage("Fine quarto."); gameState.isRunning = false; saveGameState(); updateUI(); return; }
             gameState.isRunning = !gameState.isRunning;
-            if (gameState.isRunning) { 
-                gameState.lastUpdateTime = Date.now(); 
-                timerInterval = setInterval(updateTimer, 100); 
-            } else { 
-                clearInterval(timerInterval); 
-                // Aggiorna l'orario RT in cui il timer si è fermato (utile per il riposo)
-                // Nota: Non è necessario aggiornare le rotazioni qui, solo alla sostituzione/fine quarto.
-            }
+            if (gameState.isRunning) { gameState.lastUpdateTime = Date.now(); timerInterval = setInterval(updateTimer, 100); } 
+            else { clearInterval(timerInterval); }
             saveGameState(); updateUI();
         }
 
@@ -404,7 +389,7 @@
 
             if (newTime <= 0) { 
                 setRemainingTime(0); 
-                handleQuarterEnd(true); 
+                handleQuarterEnd(true); // Indica che il quarto è finito per esaurimento del tempo
             } else {
                 setRemainingTime(newTime);
             }
@@ -414,34 +399,30 @@
         function handleQuarterEnd(isTimeOut = false) {
             clearInterval(timerInterval); gameState.isRunning = false;
             
-            // 1. Finalizza le rotazioni con Game Clock e Real Time di fine quarto
+            // 1. Finalizza le rotazioni per il quarto che sta finendo
             const quarterDuration = getQuarterDuration();
-            const remaining = getRemainingTime();
-            const elapsed = quarterDuration - remaining;
-            updateRotationEndTimes(elapsed); 
+            const elapsed = quarterDuration - getRemainingTime();
+            updateRotationEndTimes(elapsed);
 
+            // 2. Imposta a 0:00 se il quarto è effettivamente finito
             if(isTimeOut) {
                 setRemainingTime(0);
             }
 
             const nextQ = NEXT_QUARTER[gameState.currentQuarter];
             if (nextQ) {
+                // Se si è arrivati a 0:00, si avanza al quarto successivo
                 if(isTimeOut) {
                     gameState.currentQuarter = nextQ; 
-                    const now = Date.now(); // Real Time Start del nuovo quarto
                     
-                    // Inizia la rotazione nel nuovo quarto
+                    // Inizia la rotazione per i giocatori in campo nel nuovo quarto (start time è 0)
                     gameState.players.filter(p => p.status === 'court').forEach(p => {
                         let perf = getPerf(p, nextQ); 
-                        perf.rotations.push({ 
-                            gcStart: 0, 
-                            gcEnd: null, 
-                            rtStart: now, 
-                            rtEnd: null 
-                        });
+                        perf.rotations.push({ start: 0, end: null });
                     });
                     showMessage(`Fine Quarto! Passaggio a ${nextQ}.`);
                 } else {
+                    // Se non è finito (e.g. cambio quarto manuale)
                     showMessage(`Tempo salvato: ${formatTime(getRemainingTime())}.`);
                 }
             } else { 
@@ -465,6 +446,7 @@
             const newQ = document.getElementById('quarter-select').value;
             if (newQ === gameState.currentQuarter) return;
 
+            // 1. Interrompi il timer e salva il tempo del quarto precedente
             if (gameState.isRunning) { gameState.isRunning = false; clearInterval(timerInterval); }
             
             const oldQ = gameState.currentQuarter;
@@ -472,38 +454,35 @@
             const remainingOld = gameState.quarterTimes[oldQ] || 0;
             const elapsedOld = durationOld - remainingOld;
             
-            // Aggiorna i tempi di uscita/entrata nel quarto precedente
-            updateRotationEndTimes(elapsedOld); // Chiude le rotazioni con i tempi finali del quarto vecchio
+            // 2. Aggiorna i tempi di uscita/entrata nel quarto precedente
+            updateRotationEndTimes(elapsedOld);
             
+            // 3. Imposta il nuovo quarto
             gameState.currentQuarter = newQ; 
             
-            // Aggiorna le rotazioni nel nuovo quarto
+            // 4. Aggiorna le rotazioni nel nuovo quarto
             const durationNew = getQuarterDuration(newQ);
             const remainingNew = gameState.quarterTimes[newQ] || durationNew;
             const elapsedNew = durationNew - remainingNew;
-            const now = Date.now(); 
 
+            // *** FIX CRITICO: Gestione del Quarto Destinazione ***
             if (remainingNew > 0) {
                 // Il quarto non è finito, apri la rotazione se il giocatore è in campo.
                 gameState.players.filter(p=>p.status==='court').forEach(p => {
                     const perf = getPerf(p, newQ);
-                    if(!perf.rotations.length || perf.rotations.at(-1).gcEnd !== null) {
-                        perf.rotations.push({
-                            gcStart: elapsedNew, 
-                            gcEnd: null,
-                            rtStart: now,
-                            rtEnd: null
-                        });
+                    // Apre una rotazione se non ce n'è una aperta (end === null)
+                    if(!perf.rotations.length || perf.rotations.at(-1).end !== null) {
+                        perf.rotations.push({start:elapsedNew, end:null});
                     }
                 });
             } else {
-                 // Il quarto è FINITO. Chiudi forzatamente qualsiasi rotazione aperta in questo quarto
-                 gameState.players.forEach(p => { 
+                 // Il quarto è FINITO (remainingNew === 0). Chiudi forzatamente qualsiasi rotazione aperta
+                 // in questo quarto. Questo congela i minuti a 10:00 (o 5:00 per OT) e previene i ricalcoli errati.
+                 gameState.players.forEach(p => { // Controlla TUTTI i giocatori
                     const perf = getPerf(p, newQ);
-                    if(perf.rotations.length && perf.rotations.at(-1).gcEnd === null) {
-                        perf.rotations.at(-1).gcEnd = durationNew; 
-                        // Non possiamo sapere il Real Time esatto, usiamo Date.now() come fallback per rtEnd
-                        perf.rotations.at(-1).rtEnd = now;
+                    if(perf.rotations.length && perf.rotations.at(-1).end === null) {
+                        // Chiudi al tempo massimo trascorso (elapsedNew è la durata completa, es. 600000ms)
+                        perf.rotations.at(-1).end = durationNew; 
                     }
                  });
             }
@@ -514,15 +493,11 @@
 
         // --- STATS AND ROTATION TRACKING ---
 
-        // Aggiorna la fine (GC/RT) delle rotazioni aperte per i giocatori in campo
-        function updateRotationEndTimes(gcElapsed) {
-            const now = Date.now();
+        function updateRotationEndTimes(elapsed) {
             gameState.players.filter(p => p.status === 'court').forEach(p => {
                 const perf = getPerf(p, gameState.currentQuarter);
-                if(perf.rotations.length && perf.rotations.at(-1).gcEnd === null) {
-                    perf.rotations.at(-1).gcEnd = gcElapsed;
-                    perf.rotations.at(-1).rtEnd = now; 
-                }
+                // Chiudi solo se è effettivamente aperta
+                if(perf.rotations.length && perf.rotations.at(-1).end === null) perf.rotations.at(-1).end = elapsed;
             });
         }
 
@@ -532,31 +507,17 @@
             return perf;
         }
 
-        // Gestione delle Sostituzioni (registra GC e RT)
         function handleSubstitution(p, oldS, newS) {
-            if (getRemainingTime() <= 0) return; // Solo aggiornamento stato
-            
-            const elapsed = getQuarterDuration() - getRemainingTime();
-            const now = Date.now();
-            const perf = getPerf(p, gameState.currentQuarter);
-
-            if (oldS === 'court') { 
-                // Player leaves: close the current open rotation
-                if(perf.rotations.length && perf.rotations.at(-1).gcEnd === null) {
-                    perf.rotations.at(-1).gcEnd = elapsed;
-                    perf.rotations.at(-1).rtEnd = now;
-                }
-            } else { 
-                // Player enters: open a new rotation
-                if(!perf.rotations.length || perf.rotations.at(-1).gcEnd !== null) {
-                    perf.rotations.push({
-                        gcStart: elapsed,
-                        gcEnd: null,
-                        rtStart: now,
-                        rtEnd: null
-                    });
-                }
+            // *** MANTENUTO: Blocca qualsiasi modifica alle rotazioni se il quarto è finito. ***
+            if (getRemainingTime() <= 0) {
+                // Il cambio è solo visivo, le statistiche del quarto finito sono invariate.
+                return;
             }
+
+            const elapsed = getQuarterDuration() - getRemainingTime();
+            const perf = getPerf(p, gameState.currentQuarter);
+            if (oldS === 'court') { if(perf.rotations.length && perf.rotations.at(-1).end === null) perf.rotations.at(-1).end = elapsed; } 
+            else { if(!perf.rotations.length || perf.rotations.at(-1).end !== null) perf.rotations.push({start:elapsed, end:null}); }
         }
 
         function getQuarterOffset(q) {
@@ -565,11 +526,11 @@
             return offset;
         }
         
-        // Calcola il Tempo Giocato per quarto (usa GC)
         function calcQuarterStats(p, qCode) {
             let tot = 0;
             const qDuration = getQuarterDuration(qCode);
             
+            // Tempo trascorso nel quarto in questione
             let remaining = gameState.quarterTimes[qCode] || 0;
             let elapsed = qDuration - remaining;
 
@@ -577,85 +538,86 @@
             if (!perf) return 0;
 
             perf.rotations.forEach(r => {
-                let end = r.gcEnd; // Usa gcEnd
+                let end = r.end;
+                // Se la rotazione è aperta
                 if (end === null) { 
+                    // Se è il quarto corrente E il giocatore è in campo, usa il tempo trascorso
                     if (qCode === gameState.currentQuarter && p.status === 'court') {
                         end = elapsed; 
                     } else if (remaining === 0) {
-                        end = r.gcStart; // Quarto finito, ma rotazione aperta: minG = 0 
+                        // Rotazione aperta in un quarto che ha 0:00 
+                        // Per sicurezza, se è aperta e il quarto è FINITO, il tempo giocato è 0 (start=end)
+                        end = r.start; 
                     } else {
+                        // Rotazione aperta in un quarto non corrente ma non finito (salto manuale)
                         end = elapsed; 
                     }
                 }
-                if (end !== null && r.gcStart <= end) tot += (end - r.gcStart); // Usa gcStart
+                if (end !== null && r.start <= end) tot += (end - r.start);
             });
             return tot;
         }
 
-        // Calcola il Tempo Giocato Totale e il Consecutivo (usa GC)
         function calcGameStats(p) {
             let tot = 0, currentCons = 0;
-            const currentQ = gameState.currentQuarter;
-            const currentQDuration = getQuarterDuration(currentQ);
+            const currentQDuration = getQuarterDuration();
             const currentQRemaining = getRemainingTime();
             const currentQElapsed = currentQDuration - currentQRemaining;
 
             p.performance.forEach(perf => {
                 const qd = getQuarterDuration(perf.quarter);
+                
                 const quarterRemaining = gameState.quarterTimes[perf.quarter] || 0;
                 const quarterElapsed = qd - quarterRemaining;
 
                 perf.rotations.forEach(r => {
-                    const isCurrentActive = (p.status === 'court' && r.gcEnd === null && perf.quarter === currentQ);
+                    const isCurrentActive = (p.status === 'court' && r.end === null && perf.quarter === gameState.currentQuarter);
                     
                     let end;
                     if(isCurrentActive) {
                         end = currentQElapsed;
-                    } else if (r.gcEnd !== null) { // Usa gcEnd
-                        end = r.gcEnd;
+                    } else if (r.end !== null) {
+                        end = r.end;
                     } else {
-                        if (perf.quarter !== currentQ && quarterRemaining === 0) {
-                            end = r.gcStart;
+                        // Rotazione aperta in un quarto non corrente
+                        if (perf.quarter !== gameState.currentQuarter && quarterRemaining === 0) {
+                            // Rotazione aperta in un quarto passato e FINITO. Preveniamo l'aggiunta di tempo fantasma.
+                            end = r.start;
                         } else {
+                            // Rotazione aperta in un quarto non corrente ma NON FINITO (e.g. salto manuale)
                             end = quarterElapsed; 
                         }
                     }
                     
-                    if(end != null && r.gcStart <= end) tot += (end - r.gcStart); // Usa gcStart
+                    if(end != null && r.start <= end) tot += (end - r.start);
                 });
             });
 
-            // Calcolo del tempo consecutivo (usa GC)
+            // Calcolo del tempo consecutivo
             if(p.status === 'court' && currentQRemaining > 0) {
-                const perf = getPerf(p, currentQ);
-                if(perf.rotations.length && perf.rotations.at(-1).gcEnd === null) {
-                    currentCons = currentQElapsed - perf.rotations.at(-1).gcStart;
-                }
+                const perf = getPerf(p, gameState.currentQuarter);
+                if(perf.rotations.length && perf.rotations.at(-1).end === null) currentCons = currentQElapsed - perf.rotations.at(-1).start;
             }
             return { tot, currentCons };
         }
 
-        // Calcola il tempo di riposo (usa RT)
         function calcRestStats(player) {
             if (player.status === 'court') return 0;
             const currentQ = gameState.currentQuarter;
-            const now = Date.now(); 
-            let lastExitRtTime = 0; 
-            
-            // Troviamo l'uscita più recente in Real Time (rtEnd)
-            for (let q of QUARTER_ORDER.toReversed()) {
-                const perf = player.performance.find(x => x.quarter === q);
-                if (perf && perf.rotations.length > 0) {
-                    const lastRot = perf.rotations.at(-1);
-                    if (lastRot.rtEnd !== null) { 
-                        lastExitRtTime = lastRot.rtEnd; 
-                        break; 
-                    }
+            const currentElapsed = getQuarterDuration(currentQ) - getRemainingTime();
+            const absCurrentTime = getQuarterOffset(currentQ) + currentElapsed;
+            let lastExitAbsTime = 0; 
+            const playedQuarters = player.performance.map(p => ({ q: p.quarter, idx: QUARTER_ORDER.indexOf(p.quarter), rotations: p.rotations })).sort((a, b) => b.idx - a.idx);
+            for (let p of playedQuarters) {
+                if (p.idx > QUARTER_ORDER.indexOf(currentQ)) continue;
+                if (p.rotations.length > 0) {
+                    const lastRot = p.rotations[p.rotations.length - 1];
+                    if (lastRot.end !== null) { lastExitAbsTime = getQuarterOffset(p.q) + lastRot.end; break; }
+                    // Se la rotazione è aperta, ma il quarto è finito (tempo restante 0), consideriamo l'uscita come la fine del quarto.
+                    if (gameState.quarterTimes[p.q] === 0) { lastExitAbsTime = getQuarterOffset(p.q) + getQuarterDuration(p.q); break; }
                 }
             }
-            
-            // Il riposo è (Real Time Ora - Real Time Ultima Uscita)
-            return Math.max(0, now - lastExitRtTime);
+            return Math.max(0, absCurrentTime - lastExitAbsTime);
         }
 
         
@@ -671,25 +633,17 @@
         function handleDropOnPlayer(ev, tid) { ev.preventDefault(); ev.stopPropagation(); processSwap(ev.dataTransfer.getData("pid"), tid); }
         function handlePlayerClick(ev, id) {
             ev.stopPropagation();
-            if (getRemainingTime() <= 0) return showMessage("Il quarto è finito. Non puoi effettuare sostituzioni.");
-
             if (!selectedPlayerId) { selectedPlayerId = id; updateUI(); return; }
             if (selectedPlayerId === id) { selectedPlayerId = null; updateUI(); return; }
             processSwap(selectedPlayerId, id); selectedPlayerId = null;
         }
-        function handleAreaClick(areaType) { 
-            if (selectedPlayerId) { 
-                processDrop(selectedPlayerId, areaType); 
-                selectedPlayerId = null; 
-            } 
-        }
+        function handleAreaClick(areaType) { if (selectedPlayerId) { processDrop(selectedPlayerId, areaType); selectedPlayerId = null; } }
 
         function processDrop(pid, newStatus) {
-            if (getRemainingTime() <= 0) return showMessage("Il quarto è finito. Non puoi effettuare sostituzioni.");
-
             const p = gameState.players.find(x => x.id === pid);
             if (!p || p.status === newStatus) return;
-            if (newStatus === 'court' && gameState.players.filter(x => x.status === 'court').length >= 5) return showMessage("Massimo 5 in campo!");
+            // Solo se il quarto NON è finito, si applica il limite di 5 in campo
+            if (getRemainingTime() > 0 && newStatus === 'court' && gameState.players.filter(x => x.status === 'court').length >= 5) return showMessage("Massimo 5 in campo!");
             
             const oldStatus = p.status;
             p.status = newStatus;
@@ -698,8 +652,6 @@
         }
 
         function processSwap(id1, id2) {
-            if (getRemainingTime() <= 0) return showMessage("Il quarto è finito. Non puoi effettuare sostituzioni.");
-
             const p1 = gameState.players.find(x => x.id === id1);
             const p2 = gameState.players.find(x => x.id === id2);
             if (!p1 || !p2 || p1.id === p2.id) return;
@@ -707,10 +659,13 @@
                 const bench = p1.status === 'bench' ? p1 : p2;
                 const court = p1.status === 'bench' ? p2 : p1;
                 
+                // Pre-check limite non necessario in uno swap, se non si cambiano entrambi
+                
+                // Eseguire lo swap
                 bench.status = 'court'; 
                 court.status = 'bench';
                 
-                // Aggiornare le rotazioni: l'uscita di court e l'entrata di bench avvengono nello stesso istante (now)
+                // Aggiornare le rotazioni
                 handleSubstitution(court, 'court', 'bench'); 
                 handleSubstitution(bench, 'bench', 'court');
                 
@@ -738,7 +693,7 @@
 
             // --- SEZIONE: TABELLINO UNIFICATO (Tempo Giocato + PMI) ---
             csvContent += "=== TABELLINO PARTITA (Tempo Giocato e PMI) ===\r\n";
-            csvContent += "Tempo Giocato (MIN) in formato Minuti:Secondi. PMI in Minuti Equivalenti (decimale).\r\n";
+            csvContent += "Il Tempo Giocato (MIN) è in formato Minuti:Secondi. Il PMI è in formato decimale (Minuti Equivalenti).\r\n";
             
             // 1. Riga Header
             let header = ["Numero", "Nome"];
@@ -760,6 +715,7 @@
                 let totalMin = gameStats.tot;
                 let totalPMI = 0;
                 
+                // *** AGGIUNTA DETTAGLI STINT ***
                 const detailedStints = getDetailedStints(p); 
                 
                 let row = [p.number, `"${p.name}"`]; 
@@ -779,7 +735,8 @@
                     row.push(formatPMI(qPMI));
                 });
                 
-                row.push(formatTime(totalMin), formatPMI(totalPMI), `"${detailedStints.replace(/"/g, '""')}"`); 
+                // Aggiunge Totali e Dettagli
+                row.push(formatTime(totalMin), formatPMI(totalPMI), `"${detailedStints.replace(/"/g, '""')}"`); // Sostituisce virgolette interne
                 csvContent += row.join(separator) + "\r\n";
             });
             csvContent += "\r\n";
@@ -819,23 +776,23 @@
                 const quarterElapsed = qDuration - quarterRemaining;
 
                 perf.rotations.forEach(r => {
-                    const gcStart = r.gcStart; 
-                    let gcEnd = r.gcEnd;     
+                    let startMs = r.start;
+                    let endMs = r.end;
 
-                    if (gcEnd === null) {
+                    if (endMs === null) {
                         if (qCode === currentQuarter && player.status === 'court') {
-                            gcEnd = currentQElapsed;
+                            endMs = currentQElapsed;
                         } else if (quarterRemaining === 0) {
-                            gcEnd = qDuration; 
-                            if(gcEnd === gcStart) return; 
+                            endMs = qDuration; 
+                            if(endMs === startMs) return; 
                         } else {
-                            gcEnd = quarterElapsed; 
+                            endMs = quarterElapsed; 
                         }
                     }
 
-                    if (gcEnd !== null && gcStart < gcEnd) {
-                        const startClock = formatTime(qDuration - gcStart);
-                        const endClock = formatTime(qDuration - gcEnd);
+                    if (endMs !== null && startMs < endMs) {
+                        const startClock = formatTime(qDuration - startMs);
+                        const endClock = formatTime(qDuration - endMs);
                         details.push(`${qCode}:${startClock}-${endClock}`);
                     }
                 });
@@ -844,7 +801,7 @@
             return details.join(' | ');
         }
         
-        // --- UI RENDER ---
+        // --- UI RENDER (AGGIORNATA PER PMI) ---
         
         function updateUI() {
             if (!gameState.players.length) return;
@@ -862,16 +819,18 @@
 
             const sortedPlayers = [...gameState.players].sort((a, b) => parseInt(a.number) - parseInt(b.number));
             
+            // Definisce l'elenco dei quarti da mostrare (Q1-Q4 + OT se necessario)
             let displayQuarters = ['Q1', 'Q2', 'Q3', 'Q4'];
             if (QUARTER_ORDER.includes(gameState.currentQuarter) && QUARTER_ORDER.indexOf(gameState.currentQuarter) >= QUARTER_ORDER.indexOf('OT')) {
-                displayQuarters.push("OT"); 
+                displayQuarters.push("OT"); // Lo usiamo come etichetta per OT/2OT combinato
             }
+
 
             // --- 1. Rendering Player Cards (Campo e Panchina) ---
             sortedPlayers.forEach(p => {
                 const isCourt = p.status === 'court';
                 const stats = calcGameStats(p); 
-                const restTime = calcRestStats(p); // Usa il Real Time
+                const restTime = calcRestStats(p);
                 const warn = stats.currentCons > 300000; 
                 const isSel = selectedPlayerId === p.id;
                 
@@ -884,6 +843,7 @@
                 const statsVal = isCourt ? 'text-white' : 'text-gray-600 dark:text-gray-300';
                 const warnClass = warn ? 'text-red-500 font-bold animate-pulse' : (isCourt ? 'text-white' : 'text-gray-500');
 
+                // CARD HTML: h-auto e min-h
                 const html = `
                 <div id="${p.id}" class="player-card flex flex-col justify-between p-3 ${selCls} ${cardBg} ${border} min-h-[9rem] h-auto w-full"
                      draggable="true" ondragstart="handleDragStart(event, '${p.id}')" ondragend="handleDragEnd(event)"
@@ -896,7 +856,7 @@
                     <div class="font-bold text-base leading-tight line-clamp-2 break-words ${nameClass}">${p.name}</div>
                     <div class="flex justify-between items-end mt-2 text-xs font-medium">
                         <div class="flex flex-col">
-                            <span class="uppercase text-[10px] ${statsLabel}">${isCourt ? 'Cons (GC)' : 'Riposo (RT)'}</span>
+                            <span class="uppercase text-[10px] ${statsLabel}">${isCourt ? 'Cons' : 'Riposo'}</span>
                             <span class="font-mono text-sm ${warnClass}">${isCourt ? formatTime(stats.currentCons) : formatTime(restTime)}</span>
                         </div>
                         <div class="flex flex-col items-end">
@@ -945,7 +905,7 @@
 
             let pmiTbl = `
                 <h3 class="text-lg font-bold text-gray-800 dark:text-white mt-6 mb-2">PMI Score (Punteggio Densità)</h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 italic">Punteggio in minuti equivalenti calcolato su Tempo di Gioco (minG) e Tempo Reale (minT)</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 italic">Valore in minuti equivalenti (più è alto, più densa è stata la rotazione)</p>
                 <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table class="min-w-full text-sm text-left dark:text-gray-300">
                 <thead class="bg-gray-50 dark:bg-gray-700/50 sticky top-0 z-10 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
@@ -975,6 +935,7 @@
             });
             pmiTbl += '</tbody></table></div>';
             
+            // Inserisce entrambe le tabelle nell'area delle statistiche
             sa.innerHTML = timeTbl + pmiTbl;
         }
     </script>

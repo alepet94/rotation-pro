@@ -261,10 +261,12 @@
                         durationMs = getQuarterDuration(perf.quarter) - r.start;
                     }
 
+                    // Conversione fondamentale in SECONDI per la formula
                     const durationSec = Math.floor(durationMs / 1000);
                     
                     if (durationSec > 0) {
                         const fix = getFIx(durationSec);
+                        // FORMULA: StF = Secondi * FIx
                         tgl += (durationSec * fix);
                     }
                 });
@@ -272,11 +274,13 @@
             return Math.round(tgl);
         }
 
+        // AGGIORNATA: Logica Zone Colore TGL (Verde, Giallo, Arancio, Rosso)
         function getTGLZone(val) {
-            if (val <= 2274) return { color: 'text-green-600 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900', label: 'Verde' };
-            if (val <= 3695) return { color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900', label: 'Giallo' };
-            if (val <= 4832) return { color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900', label: 'Arancio' };
-            return { color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900', label: 'Rosso' };
+            // Basato sulle soglie: 2274, 3695, 4832
+            if (val <= 2274) return { color: 'text-green-500 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-900/30', label: 'Verde' };
+            if (val <= 3695) return { color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-900/30', label: 'Giallo' };
+            if (val <= 4832) return { color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30', label: 'Arancio' };
+            return { color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30', label: 'Rosso' };
         }
 
         // --- INIZIALIZZAZIONE E SALVATAGGIO ---
@@ -677,12 +681,6 @@
             const sorted = [...gameState.players].sort((a, b) => parseInt(a.number) - parseInt(b.number));
 
             // Generate Cards
-            const cardsHTML = sorted.reduce((acc, p) => {
-                const isCourt = p.status === 'court';
-                // Solo per la renderizzazione HTML, separiamo campo e panchina
-                return acc; 
-            }, {court: '', bench: ''});
-            
             ca.innerHTML = ''; ba.innerHTML = '';
             
             sorted.forEach(p => {
@@ -692,7 +690,7 @@
                 const tgl = calcTGL(p);
                 const tglZone = getTGLZone(tgl);
 
-                // AVVISO OVERPLAY
+                // Check Overplay (per l'highlight rosso lampeggiante)
                 const warn = isCourt && stats.currentCons > OVERPLAY_THRESHOLD_MS;
                 const isSel = selectedPlayerId === p.id;
                 
@@ -703,7 +701,9 @@
                 const nameClass = isCourt ? 'court-text-primary' : 'text-gray-800 dark:text-white';
                 const statsLabel = isCourt ? 'court-text-secondary' : 'text-gray-400';
                 const statsVal = isCourt ? 'text-white' : 'text-gray-600 dark:text-gray-300';
-                const warnClass = warn ? 'text-red-500 font-bold animate-pulse' : (isCourt ? 'text-white' : 'text-gray-500');
+                
+                // CLASSI PER IL TESTO DEI MINUTI CONSECUTIVI
+                const consTimeClass = warn ? 'text-red-500 font-bold animate-pulse' : (isCourt ? 'text-white' : 'text-gray-500');
 
                 const html = `
                 <div id="${p.id}" class="player-card flex flex-col justify-between p-3 ${selCls} ${cardBg} ${border} min-h-[9rem] h-auto w-full relative"
@@ -717,14 +717,13 @@
 
                     <div class="flex justify-between items-start mt-4">
                         <span class="jersey-number text-2xl ${numClass}">${p.number}</span>
-                        ${isCourt && warn ? '<span class="animate-pulse text-red-500 font-extrabold text-xs bg-yellow-100 dark:bg-red-900/50 px-2 py-1 rounded-full shadow-sm border border-red-500">OVERPLAY</span>' : ''}
-                    </div>
+                        </div>
                     <div class="font-bold text-base leading-tight line-clamp-2 break-words ${nameClass}">${p.name}</div>
                     
                     <div class="flex justify-between items-end mt-2 text-xs font-medium">
                         <div class="flex flex-col">
                             <span class="uppercase text-[10px] ${statsLabel}">${isCourt ? 'Cons' : 'Riposo'}</span>
-                            <span class="font-mono text-sm ${warnClass}">${isCourt ? formatTime(stats.currentCons) : formatTime(restTime)}</span>
+                            <span class="font-mono text-sm ${isCourt ? consTimeClass : 'text-green-500 dark:text-green-400'}">${isCourt ? formatTime(stats.currentCons) : formatTime(restTime)}</span>
                         </div>
                         <div class="flex flex-col items-end">
                             <span class="uppercase text-[10px] ${statsLabel}">Tot</span>
@@ -753,6 +752,7 @@
                 const tgl = calcTGL(p);
                 const tglZ = getTGLZone(tgl);
                 const restMs = calcRestStats(p);
+                const warn = p.status === 'court' && gameSt.currentCons > OVERPLAY_THRESHOLD_MS;
                 
                 tbl += `<tr class="stats-row border-b border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td class="px-4 py-2 font-bold text-gray-900 dark:text-white">${p.number}</td>
@@ -767,8 +767,8 @@
                 
                 // Valori Nuovi
                 tbl += `<td class="px-4 py-2 text-right font-mono text-gray-900 dark:text-white font-bold">${formatTime(gameSt.tot)}</td>`;
-                tbl += `<td class="px-4 py-2 text-right font-mono font-bold ${tglZ.color}">${tgl}</td>`;
-                tbl += `<td class="px-4 py-2 text-right font-mono ${p.status==='court' && gameSt.currentCons > OVERPLAY_THRESHOLD_MS ? 'text-red-500 font-bold animate-pulse' : 'text-gray-500'}">${p.status === 'court' ? formatTime(gameSt.currentCons) : '-'}</td>`;
+                tbl += `<td class="px-4 py-2 text-right font-mono font-bold ${tglZ.color}">${tgl}</td>`; // Colore TGL
+                tbl += `<td class="px-4 py-2 text-right font-mono ${warn ? 'text-red-500 font-bold animate-pulse' : 'text-gray-500'}">${p.status === 'court' ? formatTime(gameSt.currentCons) : '-'}</td>`; // Cons. Warning
                 tbl += `<td class="px-4 py-2 text-right font-mono text-green-500">${p.status === 'bench' ? formatTime(restMs) : '-'}</td>`;
                 tbl += `</tr>`;
             });

@@ -18,21 +18,18 @@
         @font-face {
             font-family: 'DS-Digital';
             src: url('DS-DIGII.TTF') format('truetype');
-            font-weight: normal;
-            font-style: normal;
+            font-weight: normal; font-style: normal;
         }
 
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         
         body { font-family: 'Inter', sans-serif; overscroll-behavior-y: contain; transition: background-color 0.3s, color 0.3s; }
         
+        /* COURT STYLES */
         .court-area {
             background-color: #eebb88;
             background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 58px, rgba(160, 82, 45, 0.15) 59px, rgba(160, 82, 45, 0.15) 60px), repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 30px, transparent 30px, transparent 60px);
-            border: 6px solid #ffffff; 
-            box-shadow: inset 0 0 60px rgba(0,0,0,0.15); 
-            position: relative; 
-            min-height: 400px;
+            border: 6px solid #ffffff; box-shadow: inset 0 0 60px rgba(0,0,0,0.15); position: relative; min-height: 400px;
         }
         .court-lines::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: #ffffff; pointer-events: none; z-index: 1; }
         .court-lines::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 4px solid #ffffff; border-radius: 50%; pointer-events: none; z-index: 1; }
@@ -45,12 +42,13 @@
         }
         .dark .bench-area { background-color: #1e293b; background-image: linear-gradient(45deg, #334155 25%, transparent 25%, transparent 75%, #334155 75%, #334155), linear-gradient(45deg, #334155 25%, transparent 25%, transparent 75%, #334155 75%, #334155); border-color: #475569; }
         
+        /* CARD STYLES */
         .player-card { touch-action: manipulation; cursor: pointer; background: rgba(255, 255, 255, 0.98); border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.15s ease, box-shadow 0.15s; z-index: 10; position: relative; min-height: 9rem; height: auto; user-select: none; }
         .player-card.on-court { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: white; box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4); }
         .dark .player-card:not(.on-court) { background: rgba(30, 41, 59, 0.98); color: #f1f5f9; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .player-card:active { transform: scale(0.96); }
+        .selected-card { ring: 4px solid #fbbf24 !important; transform: scale(1.05); z-index: 50; }
         .court-number { color: #fbbf24; font-size: 1.6rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        
         .timer-display { font-family: 'DS-Digital', 'Courier New', monospace; font-weight: 700; font-size: 3rem; line-height: 1; letter-spacing: -2px; color: #ef4444; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
@@ -70,7 +68,7 @@
             </div>
             <div class="flex items-center space-x-3">
                 <button onclick="exportToCSV()" class="p-2 rounded-full bg-blue-600 text-white shadow-sm text-xs font-bold uppercase">CSV</button>
-                <button onclick="toggleTheme()" class="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-yellow-400">🌙/☀️</button>
+                <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-yellow-400">🌙/☀️</button>
             </div>
         </header>
 
@@ -129,18 +127,18 @@
     </div>
 
     <script>
-        // --- LOGICHE COSTANTI ---
+        // --- CONFIGURAZIONI ---
         const FIX_LOOKUP = [
-            {l:15, v:1.05},{l:30, v:1.10},{l:45, v:1.15},{l:60, v:1.20},{l:75, v:1.25},{l:90, v:1.30},{l:105, v:1.35},{l:120, v:1.40},
-            {l:135, v:1.45},{l:150, v:1.50},{l:165, v:1.55},{l:180, v:1.60},{l:195, v:1.65},{l:210, v:1.70},{l:225, v:1.75},{l:240, v:1.80},
-            {l:255, v:1.83},{l:270, v:1.85},{l:285, v:1.88},{l:300, v:1.90},{l:315, v:1.91},{l:330, v:1.93},{l:345, v:1.94},{l:360, v:1.95},
-            {l:375, v:1.96},{l:390, v:1.98},{l:405, v:1.99},{l:420, v:2.00},{l:600, v:2.12}
+            {l:16, v:1.00},{l:34, v:1.01},{l:47, v:1.02},{l:59, v:1.03},{l:70, v:1.04},{l:81, v:1.05},{l:90, v:1.06},{l:99, v:1.07},{l:108, v:1.08},{l:116, v:1.09},{l:124, v:1.10},
+            {l:132, v:1.11},{l:140, v:1.12},{l:147, v:1.13},{l:154, v:1.14},{l:161, v:1.15},{l:168, v:1.16},{l:175, v:1.17},{l:182, v:1.18},{l:188, v:1.19},{l:194, v:1.20},
+            {l:300, v:1.39},{l:420, v:1.65},{l:540, v:1.95},{l:600, v:2.10},{l:9999, v:2.11}
         ];
 
         let gameState = { players: [], isRunning: false, lastUpdateTime: 0, currentQuarter: 'Q1', quarterTimes: {} };
         let timerInterval = null;
+        let selectedPlayerId = null;
 
-        // --- FATIGUE MULTIPLIER LOGIC ---
+        // --- CALCOLO TGL (Logica Fatigue Multiplier) ---
         function getFatigueMultiplier(idx, totMin) {
             const s = idx + 1;
             if (s === 1) return 1.0;
@@ -160,7 +158,7 @@
                 });
             });
             stints.forEach((sec, i) => {
-                const fix = (FIX_LOOKUP.find(e => sec <= e.l) || {v:2.12}).v;
+                const fix = (FIX_LOOKUP.find(e => sec <= e.l) || {v:2.11}).v;
                 tgl += (sec * fix * getFatigueMultiplier(i, totMinBefore));
                 totMinBefore += (sec / 60);
             });
@@ -179,10 +177,54 @@
             const perf = player.performance.find(p => p.quarter === gameState.currentQuarter);
             if (!perf) return 0;
             const last = perf.rotations[perf.rotations.length - 1];
-            return (last && last.end === null) ? (600000 - gameState.remainingTime_internal) - last.start : 0;
+            return (last && last.end === null) ? (600000 - gameState.quarterTimes[gameState.currentQuarter]) - last.start : 0;
         }
 
-        // --- CORE FUNCTIONS ---
+        // --- LOGICA SOSTITUZIONI (Tocco A + Tocco B) ---
+        function handlePlayerClick(id) {
+            const p = gameState.players.find(x => x.id === id);
+            
+            if (selectedPlayerId === null) {
+                selectedPlayerId = id;
+            } else if (selectedPlayerId === id) {
+                selectedPlayerId = null;
+            } else {
+                const p1 = gameState.players.find(x => x.id === selectedPlayerId);
+                const p2 = p;
+
+                if (p1.status !== p2.status) {
+                    performSubstitution(p1, p2);
+                    selectedPlayerId = null;
+                } else {
+                    selectedPlayerId = id; // Cambia selezione se clicco due della stessa zona
+                }
+            }
+            updateUI();
+        }
+
+        function performSubstitution(p1, p2) {
+            const now = 600000 - gameState.quarterTimes[gameState.currentQuarter];
+            const courtP = p1.status === 'court' ? p1 : p2;
+            const benchP = p1.status === 'bench' ? p1 : p2;
+
+            // Esci quello in campo
+            let perfOut = courtP.performance.find(x => x.quarter === gameState.currentQuarter);
+            if (perfOut) {
+                let last = perfOut.rotations[perfOut.rotations.length - 1];
+                if (last && last.end === null) last.end = now;
+            }
+            courtP.status = 'bench';
+
+            // Entra quello in panchina
+            let perfIn = benchP.performance.find(x => x.quarter === gameState.currentQuarter);
+            if (!perfIn) { perfIn = { quarter: gameState.currentQuarter, rotations: [] }; benchP.performance.push(perfIn); }
+            perfIn.rotations.push({ start: now, end: null });
+            benchP.status = 'court';
+
+            localStorage.setItem('basket_rotation_fivein_v1', JSON.stringify(gameState));
+        }
+
+        // --- CORE UI ---
         function toggleTimer() {
             if (gameState.isRunning) { clearInterval(timerInterval); gameState.isRunning = false; }
             else { gameState.lastUpdateTime = Date.now(); timerInterval = setInterval(updateTimer, 100); gameState.isRunning = true; }
@@ -194,30 +236,19 @@
             const delta = Date.now() - gameState.lastUpdateTime;
             gameState.lastUpdateTime = Date.now();
             gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, gameState.quarterTimes[gameState.currentQuarter] - delta);
-            if (gameState.quarterTimes[gameState.currentQuarter] === 0) toggleTimer();
+            if (gameState.quarterTimes[gameState.currentQuarter] === 0) { toggleTimer(); handleQuarterEnd(); }
             updateUI();
         }
 
-        function handlePlayerClick(id) {
-            const p = gameState.players.find(x => x.id === id);
-            const now = 600000 - gameState.quarterTimes[gameState.currentQuarter];
-            if (p.status === 'bench') {
-                if (gameState.players.filter(x => x.status === 'court').length >= 5) return;
-                p.status = 'court';
-                let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
-                if (!perf) { perf = { quarter: gameState.currentQuarter, rotations: [] }; p.performance.push(perf); }
-                perf.rotations.push({ start: now, end: null });
-            } else {
-                p.status = 'bench';
+        function handleQuarterEnd() {
+            const now = 600000;
+            gameState.players.filter(p => p.status === 'court').forEach(p => {
                 let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
                 if (perf) { let last = perf.rotations[perf.rotations.length - 1]; if (last && last.end === null) last.end = now; }
-            }
-            updateUI();
-            localStorage.setItem('basket_rotation_fivein_v1', JSON.stringify(gameState));
+            });
         }
 
         function updateUI() {
-            gameState.remainingTime_internal = gameState.quarterTimes[gameState.currentQuarter];
             document.getElementById('timer-display').innerText = formatTime(gameState.quarterTimes[gameState.currentQuarter]);
             const court = document.getElementById('court-area'), bench = document.getElementById('bench-area');
             court.innerHTML = ''; bench.innerHTML = '';
@@ -228,7 +259,7 @@
                 if (tgl > 4832) color = 'text-red-600'; else if (tgl > 3695) color = 'text-orange-500'; else if (tgl > 2274) color = 'text-yellow-500';
 
                 const card = `
-                    <div onclick="handlePlayerClick(${p.id})" class="player-card ${p.status === 'court' ? 'on-court' : ''} p-4 flex flex-col justify-between">
+                    <div onclick="handlePlayerClick(${p.id})" class="player-card ${p.status === 'court' ? 'on-court' : ''} ${selectedPlayerId === p.id ? 'selected-card' : ''} p-4 flex flex-col justify-between">
                         <div class="flex justify-between items-start">
                             <span class="court-number font-black">${p.number}</span>
                             <div class="text-right"><p class="text-[10px] uppercase font-bold opacity-60">Load</p><p class="text-lg font-black ${color}">${tgl}</p></div>
@@ -247,15 +278,15 @@
         }
 
         function renderTable() {
-            let html = `<table class="w-full text-left text-xs"><thead class="sticky top-0 bg-white dark:bg-gray-800 border-b"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Nome</th><th class="px-4 py-2 text-right">Q1</th><th class="px-4 py-2 text-right">Q2</th><th class="px-4 py-2 text-right">Q3</th><th class="px-4 py-2 text-right">Q4</th><th class="px-4 py-2 text-right font-bold">TOT</th><th class="px-4 py-2 text-right font-bold">TGL</th></tr></thead><tbody>`;
+            let html = `<table class="w-full text-left text-xs text-gray-800 dark:text-gray-200"><thead class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Nome</th><th class="px-4 py-2 text-right">Q1</th><th class="px-4 py-2 text-right">Q2</th><th class="px-4 py-2 text-right">Q3</th><th class="px-4 py-2 text-right">Q4</th><th class="px-4 py-2 text-right font-bold">TOT</th><th class="px-4 py-2 text-right font-bold">TGL</th></tr></thead><tbody>`;
             gameState.players.forEach(p => {
-                html += `<tr class="border-b dark:border-gray-700">
+                html += `<tr class="border-b border-gray-100 dark:border-gray-700">
                     <td class="px-4 py-2 font-bold">${p.number}</td>
                     <td class="px-4 py-2">${p.name}</td>
-                    <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q1'))}</td>
-                    <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q2'))}</td>
-                    <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q3'))}</td>
-                    <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q4'))}</td>
+                    <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q1'))}</td>
+                    <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q2'))}</td>
+                    <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q3'))}</td>
+                    <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q4'))}</td>
                     <td class="px-4 py-2 text-right font-bold">${formatTime(calcTotalMs(p))}</td>
                     <td class="px-4 py-2 text-right font-bold">${calcTGL(p)}</td>
                 </tr>`;
@@ -272,8 +303,7 @@
             }, 0);
         }
 
-        function formatTime(ms) { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; }
-        function toggleTheme() { document.documentElement.classList.toggle('dark'); }
+        function formatTime(ms) { const s = Math.floor(Math.max(0, ms) / 1000); return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; }
         function changeQuarter() { gameState.currentQuarter = document.getElementById('quarter-select').value; updateUI(); }
         function adjustTime(ms) { gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, Math.min(600000, gameState.quarterTimes[gameState.currentQuarter] + ms)); updateUI(); }
 
@@ -281,9 +311,10 @@
             const lines = document.getElementById('player-input').value.split('\n');
             gameState.players = lines.map((l, i) => {
                 const parts = l.trim().split(/[ .]+/);
-                return { id: i, number: parts[0] || '??', name: parts.slice(1).join(' '), status: 'bench', performance: [] };
+                return { id: i, number: parts[0] || '??', name: parts.slice(1).join(' '), status: i < 5 ? 'court' : 'bench', performance: [] };
             }).filter(p => p.name);
             ['Q1','Q2','Q3','Q4','OT'].forEach(q => gameState.quarterTimes[q] = 600000);
+            gameState.players.filter(p => p.status === 'court').forEach(p => p.performance = [{ quarter: 'Q1', rotations: [{ start: 0, end: null }] }]);
             document.getElementById('setup-modal').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
             updateUI();

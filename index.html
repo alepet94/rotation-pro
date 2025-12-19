@@ -10,24 +10,33 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { 
-                extend: { 
-                    colors: { 
-                        gray: { 900: '#111827', 800: '#1f2937', 700: '#374151' } 
-                    } 
-                } 
-            }
+            theme: { extend: { colors: { gray: { 900: '#111827', 800: '#1f2937', 700: '#374151' } } } }
         }
     </script>
 
     <style>
+        @font-face {
+            font-family: 'DS-Digital';
+            src: url('DS-DIGII.TTF') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        .digital-font { font-family: 'DS-Digital', monospace; }
         .stats-row:nth-child(even) { background-color: rgba(0,0,0,0.02); }
         .dark .stats-row:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+        
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-red { animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen pb-20">
 
     <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,12 +45,12 @@
                     <span class="text-2xl">🏀</span>
                     <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500">FiveIN</h1>
                 </div>
-                <div id="gameClockDisplay" class="font-mono text-2xl font-bold text-red-600 bg-black px-4 py-1 rounded border-2 border-gray-700">
+                <div id="gameClockDisplay" class="digital-font text-3xl font-bold text-red-600 bg-black px-4 py-1 rounded border-2 border-gray-700 tracking-wider">
                     10:00
                 </div>
-                <div class="flex items-center gap-2">
-                    <span id="currentQuarterLabel" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 uppercase">Q1</span>
-                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">🌙</button>
+                <div class="flex items-center gap-3">
+                    <span id="currentQuarterLabel" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">Q1</span>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">🌙</button>
                 </div>
             </div>
         </div>
@@ -51,65 +60,60 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 col-span-2">
                 <div class="flex flex-wrap gap-3">
-                    <button onclick="startClock()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg active:scale-95">START</button>
-                    <button onclick="stopClock()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg active:scale-95">STOP</button>
-                    <button onclick="nextQuarter()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 py-3 px-6 rounded-lg font-semibold transition-colors">PROSSIMO QUARTO</button>
+                    <button id="startBtn" onclick="startClock()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg active:scale-95 text-lg">START</button>
+                    <button id="stopBtn" onclick="stopClock()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg active:scale-95 text-lg">STOP</button>
+                    <button onclick="nextQuarter()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 py-4 px-6 rounded-xl font-bold transition-colors">QUARTO +</button>
                 </div>
             </div>
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col justify-center">
-                <div class="text-center">
-                    <p class="text-sm text-gray-500 uppercase font-bold tracking-wider">Tempo Totale Gioco</p>
-                    <p id="totalMatchTime" class="text-3xl font-mono font-bold text-blue-600">00:00</p>
-                </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col justify-center text-center">
+                <p class="text-xs text-gray-500 uppercase font-bold tracking-widest mb-1">Match Time</p>
+                <p id="totalMatchTime" class="text-3xl font-bold text-blue-600 digital-font">00:00</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-4">
-                <h3 class="text-lg font-bold flex items-center gap-2 text-green-600">
-                    <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span> IN CAMPO (5)
+                <h3 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-green-600 ml-1">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> In Campo
                 </h3>
-                <div id="courtList" class="grid grid-cols-1 gap-3"></div>
+                <div id="courtList" class="grid grid-cols-1 gap-2"></div>
             </div>
-
             <div class="space-y-4">
-                <h3 class="text-lg font-bold flex items-center gap-2 text-gray-500">
-                    <span class="w-3 h-3 bg-gray-400 rounded-full"></span> PANCHINA
+                <h3 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-gray-500 ml-1">
+                    Panchina
                 </h3>
-                <div id="benchList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                <div id="benchList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <h3 class="text-lg font-bold">Riepilogo Carico Live</h3>
-                <button onclick="exportData()" class="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100 transition-colors">Esporta CSV</button>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                <h3 class="font-bold text-lg">Box Score Carico</h3>
+                <button onclick="exportCSV()" class="text-xs bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition-all">EXPORT CSV</button>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500">
-                            <th class="px-4 py-3">#</th>
-                            <th class="px-4 py-3">Nome</th>
-                            <th class="px-4 py-3 text-right">Q1</th>
-                            <th class="px-4 py-3 text-right">Q2</th>
-                            <th class="px-4 py-3 text-right">Q3</th>
-                            <th class="px-4 py-3 text-right">Q4</th>
-                            <th class="px-4 py-3 text-right text-black dark:text-white">Partita</th>
-                            <th class="px-4 py-3 text-right text-black dark:text-white">TGL</th>
-                            <th class="px-4 py-3 text-right">Stint Attuale</th>
+                        <tr class="bg-gray-100/50 dark:bg-gray-700/50 text-[10px] uppercase font-black text-gray-400">
+                            <th class="px-4 py-4">#</th>
+                            <th class="px-4 py-4">Nome</th>
+                            <th class="px-4 py-4 text-right">Q1</th>
+                            <th class="px-4 py-4 text-right">Q2</th>
+                            <th class="px-4 py-4 text-right">Q3</th>
+                            <th class="px-4 py-4 text-right">Q4</th>
+                            <th class="px-4 py-4 text-right text-gray-900 dark:text-white">TOT</th>
+                            <th class="px-4 py-4 text-right text-gray-900 dark:text-white">TGL</th>
+                            <th class="px-4 py-4 text-right">Cons.</th>
                         </tr>
                     </thead>
-                    <tbody id="statsTableBody"></tbody>
+                    <tbody id="statsTableBody" class="divide-y divide-gray-100 dark:divide-gray-700"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
     <script>
-        // --- CONFIGURAZIONE E COSTANTI ---
-        
-        // Tabella FIx (Secondi -> Moltiplicatore Intensità)
+        // --- CONFIGURAZIONE FISSA (TABELLA FIX) ---
         const FIX_LOOKUP = [
             {max: 15, val: 1.05}, {max: 30, val: 1.10}, {max: 45, val: 1.15}, {max: 60, val: 1.20},
             {max: 75, val: 1.25}, {max: 90, val: 1.30}, {max: 105, val: 1.35}, {max: 120, val: 1.40},
@@ -123,18 +127,17 @@
             {max: 555, val: 2.09}, {max: 570, val: 2.10}, {max: 585, val: 2.11}, {max: 600, val: 2.12}
         ];
 
-        // Zone di Carico (Soglie TGL)
         const TGL_ZONES = {
-            VERDE: { max: 2274, color: 'text-green-500', bg: 'bg-green-100' },
-            GIALLO: { max: 3695, color: 'text-yellow-500', bg: 'bg-yellow-100' },
-            ARANCIO: { max: 4832, color: 'text-orange-500', bg: 'bg-orange-100' },
-            ROSSO: { max: Infinity, color: 'text-red-500', bg: 'bg-red-100' }
+            VERDE: { max: 2274, color: 'text-green-500' },
+            GIALLO: { max: 3695, color: 'text-yellow-500' },
+            ARANCIO: { max: 4832, color: 'text-orange-500' },
+            ROSSO: { max: Infinity, color: 'text-red-500' }
         };
 
-        // --- STATO DELL'APP ---
+        // --- STATO ---
         let gameState = {
             timer: null,
-            remainingTime: 600000, // 10 min in ms
+            remainingTime: 600000,
             currentQuarter: 'Q1',
             isClockRunning: false,
             lastTick: null
@@ -155,25 +158,17 @@
             { id: 12, number: "77", name: "Giocatore 12", status: 'bench', performance: [] }
         ];
 
-        // --- LOGICA DI CALCOLO CARICO (NUOVA) ---
+        // --- NUOVA LOGICA CALCOLO TGL (FATIGUE MULTIPLIER) ---
 
-        /**
-         * Restituisce il moltiplicatore di fatica residua basato sulle tue tabelle.
-         * @param {number} stintIndex - Indice dello stint (0 per il primo, 1 per il secondo...)
-         * @param {number} totMinutesPlayedBefore - Minuti totali giocati PRIMA di questo stint
-         */
         function getFatigueMultiplier(stintIndex, totMinutes) {
             const stintNum = stintIndex + 1;
-
             if (stintNum === 1) return 1.0;
-
             if (stintNum === 2) {
                 if (totMinutes <= 4) return 1.005;
                 if (totMinutes <= 6) return 1.007;
                 if (totMinutes <= 8) return 1.010;
                 return 1.012;
             }
-
             if (stintNum === 3) {
                 if (totMinutes <= 4) return 1.003;
                 if (totMinutes <= 6) return 1.005;
@@ -185,7 +180,6 @@
                 if (totMinutes <= 18) return 1.018;
                 return 1.020;
             }
-
             if (stintNum === 4) {
                 if (totMinutes <= 6) return 1.000;
                 if (totMinutes <= 8) return 1.005;
@@ -200,7 +194,6 @@
                 if (totMinutes <= 28) return 1.030;
                 return 1.035;
             }
-
             if (stintNum === 5) {
                 if (totMinutes <= 8) return 1.000;
                 if (totMinutes <= 12) return 1.002;
@@ -212,7 +205,6 @@
                 if (totMinutes <= 28) return 1.025;
                 return 1.035;
             }
-
             if (stintNum >= 6) {
                 if (totMinutes <= 8) return 1.000;
                 if (totMinutes <= 12) return 1.002;
@@ -225,7 +217,6 @@
                 if (totMinutes <= 30) return 1.030;
                 return 1.035;
             }
-
             return 1.0;
         }
 
@@ -235,77 +226,61 @@
         }
 
         function calcTGL(player) {
-            let tgl = 0;
+            let tglAccumulated = 0;
             let totalMinutesPlayedBefore = 0;
-            let allStints = [];
+            let stints = [];
 
-            const currentQ = gameState.currentQuarter;
-            const qDuration = 600000;
-            const qElapsed = qDuration - gameState.remainingTime;
-
-            // Raccogliamo tutti gli stint (passati e attuale)
-            player.performance.forEach(perf => {
-                perf.rotations.forEach(r => {
-                    let durationMs = 0;
-                    if (r.end !== null) {
-                        durationMs = r.end - r.start;
-                    } else if (perf.quarter === currentQ && player.status === 'court') {
-                        durationMs = qElapsed - r.start;
-                    }
-                    if (durationMs > 0) {
-                        allStints.push(Math.floor(durationMs / 1000));
-                    }
-                });
-            });
-
-            // Calcolo sequenziale degli StF con moltiplicatore FR
-            allStints.forEach((stintSec, index) => {
-                const fix = getFIx(stintSec);
-                const multiplier = getFatigueMultiplier(index, totalMinutesPlayedBefore);
-                
-                const stf = (stintSec * fix) * multiplier;
-                tgl += stf;
-                
-                totalMinutesPlayedBefore += (stintSec / 60);
-            });
-
-            return Math.round(tgl);
-        }
-
-        function getTGLZone(tgl) {
-            if (tgl <= TGL_ZONES.VERDE.max) return TGL_ZONES.VERDE;
-            if (tgl <= TGL_ZONES.GIALLO.max) return TGL_ZONES.GIALLO;
-            if (tgl <= TGL_ZONES.ARANCIO.max) return TGL_ZONES.ARANCIO;
-            return TGL_ZONES.ROSSO;
-        }
-
-        // --- GESTIONE CORE APP (UI & EVENTI) ---
-
-        function togglePlayer(playerId) {
-            const player = players.find(p => p.id === playerId);
-            const currentQ = gameState.currentQuarter;
-            const qDuration = 600000;
-            const qElapsed = qDuration - gameState.remainingTime;
-
-            if (player.status === 'bench') {
-                const courtPlayers = players.filter(p => p.status === 'court').length;
-                if (courtPlayers >= 5) {
-                    alert("Ci sono già 5 giocatori in campo!");
-                    return;
-                }
-                player.status = 'court';
-                let perf = player.performance.find(p => p.quarter === currentQ);
-                if (!perf) {
-                    perf = { quarter: currentQ, rotations: [] };
-                    player.performance.push(perf);
-                }
-                perf.rotations.push({ start: qElapsed, end: null });
-            } else {
-                player.status = 'bench';
-                const perf = player.performance.find(p => p.quarter === currentQ);
+            // Estraggo tutti gli stint in ordine cronologico
+            const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'OT', '2OT'];
+            quarters.forEach(q => {
+                const perf = player.performance.find(p => p.quarter === q);
                 if (perf) {
-                    const lastRot = perf.rotations[perf.rotations.length - 1];
-                    if (lastRot && lastRot.end === null) lastRot.end = qElapsed;
+                    perf.rotations.forEach(r => {
+                        let durationMs = 0;
+                        if (r.end !== null) {
+                            durationMs = r.end - r.start;
+                        } else if (q === gameState.currentQuarter && player.status === 'court') {
+                            durationMs = (600000 - gameState.remainingTime) - r.start;
+                        }
+                        if (durationMs > 0) {
+                            stints.push(durationMs / 1000);
+                        }
+                    });
+                }
+            });
+
+            // Calcolo sequenziale
+            stints.forEach((sec, idx) => {
+                const fix = getFIx(sec);
+                const multiplier = getFatigueMultiplier(idx, totalMinutesPlayedBefore);
+                const stf = (sec * fix) * multiplier;
+                tglAccumulated += stf;
+                totalMinutesPlayedBefore += (sec / 60);
+            });
+
+            return Math.round(tglAccumulated);
+        }
+
+        // --- LOGICA GESTIONE TEMPO E ROTAZIONI (DAL BACKUP) ---
+
+        function togglePlayer(id) {
+            const p = players.find(x => x.id === id);
+            const q = gameState.currentQuarter;
+            const now = 600000 - gameState.remainingTime;
+
+            if (p.status === 'bench') {
+                const onCourt = players.filter(x => x.status === 'court').length;
+                if (onCourt >= 5) return alert("Massimo 5 giocatori!");
+                p.status = 'court';
+                let perf = p.performance.find(x => x.quarter === q);
+                if (!perf) { perf = { quarter: q, rotations: [] }; p.performance.push(perf); }
+                perf.rotations.push({ start: now, end: null });
+            } else {
+                p.status = 'bench';
+                const perf = p.performance.find(x => x.quarter === q);
+                if (perf) {
+                    const last = perf.rotations[perf.rotations.length - 1];
+                    if (last && last.end === null) last.end = now;
                 }
             }
             updateUI();
@@ -316,11 +291,9 @@
             gameState.isClockRunning = true;
             gameState.lastTick = Date.now();
             gameState.timer = setInterval(() => {
-                const now = Date.now();
-                const delta = now - gameState.lastTick;
+                const delta = Date.now() - gameState.lastTick;
                 gameState.remainingTime -= delta;
-                gameState.lastTick = now;
-
+                gameState.lastTick = Date.now();
                 if (gameState.remainingTime <= 0) {
                     gameState.remainingTime = 0;
                     stopClock();
@@ -337,148 +310,130 @@
 
         function nextQuarter() {
             stopClock();
-            const qs = ['Q1', 'Q2', 'Q3', 'Q4', 'OT', '2OT'];
-            const idx = qs.indexOf(gameState.currentQuarter);
-            if (idx < qs.length - 1) {
-                // Chiudiamo rotazioni attive
+            const order = ['Q1', 'Q2', 'Q3', 'Q4', 'OT', '2OT'];
+            const idx = order.indexOf(gameState.currentQuarter);
+            if (idx < order.length - 1) {
+                // Chiudo rotazioni attive
                 players.forEach(p => {
                     if (p.status === 'court') {
-                        const perf = p.performance.find(perf => perf.quarter === gameState.currentQuarter);
+                        const perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
                         if (perf) {
-                            const lastRot = perf.rotations[perf.rotations.length - 1];
-                            if (lastRot && lastRot.end === null) lastRot.end = 600000;
+                            const last = perf.rotations[perf.rotations.length - 1];
+                            if (last && last.end === null) last.end = 600000;
                         }
                     }
                 });
-
-                gameState.currentQuarter = qs[idx + 1];
+                gameState.currentQuarter = order[idx + 1];
                 gameState.remainingTime = 600000;
-                
-                // Riapriamo rotazioni se ancora in campo
+                // Riapro rotazioni se in campo
                 players.forEach(p => {
                     if (p.status === 'court') {
-                        p.performance.push({ quarter: gameState.currentQuarter, rotations: [{ start: 0, end: null }] });
+                        let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
+                        if (!perf) { perf = { quarter: gameState.currentQuarter, rotations: [] }; p.performance.push(perf); }
+                        perf.rotations.push({ start: 0, end: null });
                     }
                 });
             }
             updateUI();
         }
 
+        // --- RENDERING UI ---
+
         function formatTime(ms) {
-            const totalSec = Math.floor(ms / 1000);
-            const m = Math.floor(totalSec / 60);
-            const s = totalSec % 60;
-            return `${m}:${s.toString().padStart(2, '0')}`;
+            const s = Math.floor(ms / 1000);
+            const m = Math.floor(s / 60);
+            return `${m}:${(s % 60).toString().padStart(2, '0')}`;
+        }
+
+        function calcQuarterMs(p, q) {
+            const perf = p.performance.find(x => x.quarter === q);
+            if (!perf) return 0;
+            return perf.rotations.reduce((acc, r) => {
+                const end = r.end !== null ? r.end : (gameState.currentQuarter === q ? (600000 - gameState.remainingTime) : 600000);
+                return acc + (end - r.start);
+            }, 0);
         }
 
         function updateUI() {
-            // Clock
             document.getElementById('gameClockDisplay').innerText = formatTime(gameState.remainingTime);
             document.getElementById('currentQuarterLabel').innerText = gameState.currentQuarter;
             
-            // Match Time
             const qIdx = ['Q1', 'Q2', 'Q3', 'Q4', 'OT', '2OT'].indexOf(gameState.currentQuarter);
-            const totalMatchMs = (qIdx * 600000) + (600000 - gameState.remainingTime);
-            document.getElementById('totalMatchTime').innerText = formatTime(totalMatchMs);
+            document.getElementById('totalMatchTime').innerText = formatTime((qIdx * 600000) + (600000 - gameState.remainingTime));
 
-            // Lists
             const courtList = document.getElementById('courtList');
             const benchList = document.getElementById('benchList');
-            const statsBody = document.getElementById('statsTableBody');
+            const tableBody = document.getElementById('statsTableBody');
 
-            courtList.innerHTML = '';
-            benchList.innerHTML = '';
-            statsBody.innerHTML = '';
+            courtList.innerHTML = ''; benchList.innerHTML = ''; tableBody.innerHTML = '';
 
             players.forEach(p => {
                 const tgl = calcTGL(p);
-                const zone = getTGLZone(tgl);
-                
-                // Card in Campo / Panchina
+                let zone = TGL_ZONES.VERDE;
+                if (tgl > TGL_ZONES.ARANCIO.max) zone = TGL_ZONES.ROSSO;
+                else if (tgl > TGL_ZONES.GIALLO.max) zone = TGL_ZONES.ARANCIO;
+                else if (tgl > TGL_ZONES.VERDE.max) zone = TGL_ZONES.GIALLO;
+
                 const card = `
-                    <div onclick="togglePlayer(${p.id})" class="cursor-pointer bg-white dark:bg-gray-800 p-3 rounded-lg border-2 ${p.status === 'court' ? 'border-green-500' : 'border-transparent shadow-sm'} flex justify-between items-center active:scale-95 transition-all">
+                    <div onclick="togglePlayer(${p.id})" class="bg-white dark:bg-gray-800 p-3 rounded-xl border-2 ${p.status === 'court' ? 'border-green-500' : 'border-transparent'} shadow-sm flex justify-between items-center active:scale-95 transition-all cursor-pointer">
                         <div class="flex items-center gap-3">
-                            <span class="font-bold text-lg w-8">${p.number}</span>
-                            <span class="font-semibold">${p.name}</span>
+                            <span class="font-black text-lg w-6">${p.number}</span>
+                            <span class="font-bold">${p.name}</span>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs font-bold ${zone.color}">TGL: ${tgl}</p>
+                            <p class="text-[10px] font-black uppercase text-gray-400">Load</p>
+                            <p class="text-sm font-black ${zone.color}">${tgl}</p>
                         </div>
                     </div>`;
                 
                 if (p.status === 'court') courtList.innerHTML += card;
                 else benchList.innerHTML += card;
 
-                // Tabella Stats
-                const q1 = formatTime(calcQuarterStats(p, 'Q1'));
-                const q2 = formatTime(calcQuarterStats(p, 'Q2'));
-                const q3 = formatTime(calcQuarterStats(p, 'Q3'));
-                const q4 = formatTime(calcQuarterStats(p, 'Q4'));
-                const tot = formatTime(calcTotalStats(p));
-                const currentStint = p.status === 'court' ? formatTime(getCurrentStintDuration(p)) : '-';
+                // Calcolo minuti per tabella
+                const q1 = calcQuarterMs(p, 'Q1');
+                const q2 = calcQuarterMs(p, 'Q2');
+                const q3 = calcQuarterMs(p, 'Q3');
+                const q4 = calcQuarterMs(p, 'Q4');
+                const totalMs = q1 + q2 + q3 + q4 + calcQuarterMs(p, 'OT') + calcQuarterMs(p, '2OT');
+                
+                let currentCons = 0;
+                if (p.status === 'court') {
+                    const perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
+                    const last = perf.rotations[perf.rotations.length - 1];
+                    currentCons = (600000 - gameState.remainingTime) - last.start;
+                }
 
-                statsBody.innerHTML += `
-                    <tr class="stats-row border-b border-gray-100 dark:border-gray-700 text-sm">
+                tableBody.innerHTML += `
+                    <tr class="stats-row text-xs">
                         <td class="px-4 py-3 font-bold">${p.number}</td>
-                        <td class="px-4 py-3 font-medium">${p.name}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${q1}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${q2}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${q3}</td>
-                        <td class="px-4 py-3 text-right text-gray-500">${q4}</td>
-                        <td class="px-4 py-3 text-right font-bold">${tot}</td>
-                        <td class="px-4 py-3 text-right font-bold ${zone.color}">${tgl}</td>
-                        <td class="px-4 py-3 text-right font-mono ${p.status === 'court' ? 'text-blue-500 animate-pulse' : 'text-gray-400'}">${currentStint}</td>
+                        <td class="px-4 py-3 font-bold">${p.name}</td>
+                        <td class="px-4 py-3 text-right text-gray-400 font-mono">${formatTime(q1)}</td>
+                        <td class="px-4 py-3 text-right text-gray-400 font-mono">${formatTime(q2)}</td>
+                        <td class="px-4 py-3 text-right text-gray-400 font-mono">${formatTime(q3)}</td>
+                        <td class="px-4 py-3 text-right text-gray-400 font-mono">${formatTime(q4)}</td>
+                        <td class="px-4 py-3 text-right font-bold font-mono">${formatTime(totalMs)}</td>
+                        <td class="px-4 py-3 text-right font-black ${zone.color}">${tgl}</td>
+                        <td class="px-4 py-3 text-right font-mono ${currentCons > 420000 ? 'text-red-500 animate-pulse-red font-bold' : 'text-gray-400'}">
+                            ${p.status === 'court' ? formatTime(currentCons) : '-'}
+                        </td>
                     </tr>`;
             });
         }
 
-        function calcQuarterStats(player, quarter) {
-            const perf = player.performance.find(p => p.quarter === quarter);
-            if (!perf) return 0;
-            return perf.rotations.reduce((acc, r) => {
-                const end = r.end !== null ? r.end : (gameState.currentQuarter === quarter ? (600000 - gameState.remainingTime) : 600000);
-                return acc + (end - r.start);
-            }, 0);
-        }
+        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
 
-        function calcTotalStats(player) {
-            return player.performance.reduce((acc, p) => {
-                return acc + p.rotations.reduce((rAcc, r) => {
-                    const end = r.end !== null ? r.end : (gameState.currentQuarter === p.quarter ? (600000 - gameState.remainingTime) : 600000);
-                    return rAcc + (end - r.start);
-                }, 0);
-            }, 0);
-        }
-
-        function getCurrentStintDuration(player) {
-            if (player.status !== 'court') return 0;
-            const perf = player.performance.find(p => p.quarter === gameState.currentQuarter);
-            if (!perf) return 0;
-            const lastRot = perf.rotations[perf.rotations.length - 1];
-            if (!lastRot || lastRot.end !== null) return 0;
-            return (600000 - gameState.remainingTime) - lastRot.start;
-        }
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-        }
-
-        function exportData() {
-            let csv = "Numero;Nome;TGL;Minuti Totali\n";
+        function exportCSV() {
+            let csv = "Numero;Nome;Q1;Q2;Q3;Q4;TOT;TGL\n";
             players.forEach(p => {
-                csv += `${p.number};${p.name};${calcTGL(p)};${formatTime(calcTotalStats(p))}\n`;
+                csv += `${p.number};${p.name};${formatTime(calcQuarterMs(p,'Q1'))};${formatTime(calcQuarterMs(p,'Q2'))};${formatTime(calcQuarterMs(p,'Q3'))};${formatTime(calcQuarterMs(p,'Q4'))};${formatTime(calcQuarterMs(p,'Q1')+calcQuarterMs(p,'Q2')+calcQuarterMs(p,'Q3')+calcQuarterMs(p,'Q4'))};${calcTGL(p)}\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'export_fivein.csv');
-            a.click();
+            a.href = url; a.download = 'export_match.csv'; a.click();
         }
 
-        // Inizializzazione
         updateUI();
-
     </script>
 </body>
 </html>

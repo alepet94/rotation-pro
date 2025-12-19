@@ -32,7 +32,6 @@
             border: 6px solid #ffffff; 
             box-shadow: inset 0 0 60px rgba(0,0,0,0.15); 
             position: relative; 
-            overflow-y: auto; 
             min-height: 400px;
         }
         .court-lines::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: #ffffff; pointer-events: none; z-index: 1; }
@@ -50,14 +49,11 @@
         .player-card.on-court { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: white; box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4); }
         .dark .player-card:not(.on-court) { background: rgba(30, 41, 59, 0.98); color: #f1f5f9; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .player-card:active { transform: scale(0.96); }
-        .selected-card { ring: 3px solid #fbbf24; transform: scale(1.02); box-shadow: 0 0 15px rgba(251, 191, 36, 0.5); border-color: #fbbf24 !important; z-index: 20; }
         .court-number { color: #fbbf24; font-size: 1.6rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         
         .timer-display { font-family: 'DS-Digital', 'Courier New', monospace; font-weight: 700; font-size: 3rem; line-height: 1; letter-spacing: -2px; color: #ef4444; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
-        .stats-row:nth-child(even) { background-color: rgba(0,0,0,0.03); }
-        .dark .stats-row:nth-child(even) { background-color: rgba(255,255,255,0.02); }
     </style>
 </head>
 <body class="p-2 sm:p-6 bg-gray-100 dark:bg-gray-900 select-none h-screen flex flex-col">
@@ -68,23 +64,20 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-1">
                 <div><h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white tracking-tight">🏀 FiveIN</h1></div>
                 <div class="mt-2 sm:mt-0 flex items-center">
-                    <label for="opponent-name" class="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0">Avversaria:</label>
+                    <label class="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0">Avversaria:</label>
                     <input type="text" id="opponent-name" placeholder="Nome Squadra" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white font-medium text-sm py-1 px-2 rounded-lg outline-none w-full max-w-xs">
                 </div>
             </div>
-            <div class="flex items-center space-x-3 order-last">
-                <button onclick="exportToCSV()" class="p-2 rounded-full bg-blue-600 text-white shadow-sm hover:shadow-md text-xs font-bold uppercase">CSV</button>
-                <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-yellow-400">
-                    <svg id="sun-icon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="moon-icon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                </button>
+            <div class="flex items-center space-x-3">
+                <button onclick="exportToCSV()" class="p-2 rounded-full bg-blue-600 text-white shadow-sm text-xs font-bold uppercase">CSV</button>
+                <button onclick="toggleTheme()" class="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-yellow-400">🌙/☀️</button>
             </div>
         </header>
 
         <div id="setup-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl w-full max-w-md">
                 <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Roster Squadra</h2>
-                <textarea id="player-input" rows="8" class="w-full p-4 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:text-white text-lg font-medium outline-none">00 Leardini
+                <textarea id="player-input" rows="8" class="w-full p-4 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:text-white">00 Leardini
 7 Tomassini
 11 Denegri
 12 Sankare
@@ -94,7 +87,7 @@
 22 Robinson
 27 Simioni
 29 Camara</textarea>
-                <button onclick="initializeGame()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition text-lg">Inizia Partita</button>
+                <button onclick="initializeGame()" class="mt-4 w-full bg-blue-600 text-white font-bold py-4 rounded-xl">Inizia Partita</button>
             </div>
         </div>
 
@@ -109,34 +102,25 @@
                 </div>
                 <div class="order-2 sm:order-3">
                     <select id="quarter-select" onchange="changeQuarter()" class="bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 text-gray-800 dark:text-white font-bold text-lg py-3 px-4 rounded-xl outline-none">
-                        <option value="Q1">Q1</option>
-                        <option value="Q2">Q2</option>
-                        <option value="Q3">Q3</option>
-                        <option value="Q4">Q4</option>
-                        <option value="OT">OT</option>
+                        <option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option><option value="OT">OT</option>
                     </select>
                 </div>
-                <div class="flex gap-2 order-3 sm:order-1 justify-center">
+                <div class="flex gap-2 order-3 sm:order-1">
                     <button id="start-pause-btn" onclick="toggleTimer()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-xl w-28">Avvia</button>
-                    <button onclick="showSetupOrGame(false); clearInterval(timerInterval); gameState.isRunning = false;" class="bg-red-500 text-white font-bold py-3 px-6 rounded-xl w-28">Reset</button>
+                    <button onclick="localStorage.removeItem('basket_rotation_fivein_v1'); location.reload();" class="bg-red-500 text-white font-bold py-3 px-6 rounded-xl w-28">Reset</button>
                 </div>
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
                 <div class="lg:col-span-3 flex flex-col min-h-0 order-2 lg:order-1">
-                    <div class="bg-white dark:bg-gray-800 rounded-t-xl p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                        <h2 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-sm tracking-wider">Panchina</h2>
-                    </div>
-                    <div id="bench-area" class="bench-area p-3 rounded-b-xl flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-1 gap-3 content-start shadow-inner" onclick="handleAreaClick('bench')"></div>
+                    <div id="bench-area" class="bench-area p-3 rounded-xl flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-1 gap-3 content-start"></div>
                 </div>
                 <div class="lg:col-span-9 flex flex-col min-h-0 order-1 lg:order-2 space-y-4">
                     <div class="relative rounded-2xl overflow-hidden shadow-2xl border-[6px] border-white dark:border-gray-500 flex-1 flex flex-col">
-                        <div class="absolute top-0 left-0 bg-black/50 text-white px-4 py-1 rounded-br-xl z-20 text-sm font-bold uppercase backdrop-blur-md">In Campo</div>
                         <div class="court-lines absolute inset-0 z-0"></div>
-                        <div id="court-area" class="court-area relative z-10 p-4 sm:p-6 flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 content-start items-start" onclick="handleAreaClick('court')"></div>
+                        <div id="court-area" class="court-area relative z-10 p-4 sm:p-6 flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 content-start items-start"></div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-48 lg:h-64">
-                        <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center"><h2 class="font-bold text-gray-500 dark:text-gray-400 uppercase text-sm tracking-wider">Tabellino</h2></div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-48 lg:h-64 overflow-hidden">
                         <div id="total-stats-area" class="overflow-y-auto custom-scroll p-0 flex-1"></div>
                     </div>
                 </div>
@@ -145,165 +129,103 @@
     </div>
 
     <script>
+        // --- LOGICHE COSTANTI ---
         const FIX_LOOKUP = [
-            { l: 16, v: 1.05 }, { l: 30, v: 1.10 }, { l: 45, v: 1.15 }, { l: 60, v: 1.20 },
-            { l: 75, v: 1.25 }, { l: 90, v: 1.30 }, { l: 105, v: 1.35 }, { l: 120, v: 1.40 },
-            { l: 135, v: 1.45 }, { l: 150, v: 1.50 }, { l: 165, v: 1.55 }, { l: 180, v: 1.60 },
-            { l: 195, v: 1.65 }, { l: 210, v: 1.70 }, { l: 225, v: 1.75 }, { l: 240, v: 1.80 },
-            { l: 255, v: 1.83 }, { l: 270, v: 1.85 }, { l: 285, v: 1.88 }, { l: 300, v: 1.90 },
-            { l: 315, v: 1.91 }, { l: 330, v: 1.93 }, { l: 345, v: 1.94 }, { l: 360, v: 1.95 },
-            { l: 375, v: 1.96 }, { l: 390, v: 1.98 }, { l: 405, v: 1.99 }, { l: 420, v: 2.00 }
+            {l:15, v:1.05},{l:30, v:1.10},{l:45, v:1.15},{l:60, v:1.20},{l:75, v:1.25},{l:90, v:1.30},{l:105, v:1.35},{l:120, v:1.40},
+            {l:135, v:1.45},{l:150, v:1.50},{l:165, v:1.55},{l:180, v:1.60},{l:195, v:1.65},{l:210, v:1.70},{l:225, v:1.75},{l:240, v:1.80},
+            {l:255, v:1.83},{l:270, v:1.85},{l:285, v:1.88},{l:300, v:1.90},{l:315, v:1.91},{l:330, v:1.93},{l:345, v:1.94},{l:360, v:1.95},
+            {l:375, v:1.96},{l:390, v:1.98},{l:405, v:1.99},{l:420, v:2.00},{l:600, v:2.12}
         ];
 
-        const QUARTER_DURATIONS_MS = { 'Q1': 600000, 'Q2': 600000, 'Q3': 600000, 'Q4': 600000, 'OT': 300000 };
-        const QUARTER_ORDER = ['Q1', 'Q2', 'Q3', 'Q4', 'OT'];
-        const STORAGE_KEY = 'basket_rotation_fivein_v1';
-        
         let gameState = { players: [], isRunning: false, lastUpdateTime: 0, currentQuarter: 'Q1', quarterTimes: {} };
         let timerInterval = null;
-        let selectedPlayerId = null;
 
-        // --- NUOVA LOGICA FATIGUE MULTIPLIER ---
-        function getFatigueMultiplier(stintIndex, totMinutesBefore) {
-            const s = stintIndex + 1;
+        // --- FATIGUE MULTIPLIER LOGIC ---
+        function getFatigueMultiplier(idx, totMin) {
+            const s = idx + 1;
             if (s === 1) return 1.0;
-            if (s === 2) {
-                if (totMinutesBefore <= 4) return 1.005;
-                if (totMinutesBefore <= 6) return 1.007;
-                if (totMinutesBefore <= 8) return 1.010;
-                return 1.012;
-            }
-            if (s === 3) {
-                if (totMinutesBefore <= 4) return 1.003;
-                if (totMinutesBefore <= 6) return 1.005;
-                if (totMinutesBefore <= 8) return 1.008;
-                if (totMinutesBefore <= 10) return 1.010;
-                if (totMinutesBefore <= 12) return 1.013;
-                if (totMinutesBefore <= 14) return 1.014;
-                if (totMinutesBefore <= 16) return 1.016;
-                if (totMinutesBefore <= 18) return 1.018;
-                return 1.020;
-            }
-            if (s === 4) {
-                if (totMinutesBefore <= 6) return 1.000;
-                if (totMinutesBefore <= 8) return 1.005;
-                if (totMinutesBefore <= 10) return 1.008;
-                if (totMinutesBefore <= 12) return 1.010;
-                if (totMinutesBefore <= 14) return 1.013;
-                if (totMinutesBefore <= 16) return 1.016;
-                if (totMinutesBefore <= 18) return 1.018;
-                if (totMinutesBefore <= 20) return 1.020;
-                if (totMinutesBefore <= 22) return 1.023;
-                if (totMinutesBefore <= 24) return 1.026;
-                if (totMinutesBefore <= 28) return 1.030;
-                return 1.035;
-            }
-            if (s === 5 || s >= 6) {
-                if (totMinutesBefore <= 8) return 1.000;
-                if (totMinutesBefore <= 12) return 1.002;
-                if (totMinutesBefore <= 16) return 1.005;
-                if (totMinutesBefore <= 18) return 1.010;
-                if (totMinutesBefore <= 20) return 1.012;
-                if (totMinutesBefore <= 22) return 1.015;
-                if (totMinutesBefore <= 24) return 1.020;
-                if (totMinutesBefore <= 28) return 1.025;
-                return (s === 5) ? 1.035 : 1.030; // 3.5% per 5, 3% per 6+ a 28-30 min
-            }
+            if (s === 2) return totMin <= 4 ? 1.005 : (totMin <= 6 ? 1.007 : (totMin <= 8 ? 1.010 : 1.012));
+            if (s === 3) return totMin <= 4 ? 1.003 : (totMin <= 6 ? 1.005 : (totMin <= 8 ? 1.008 : (totMin <= 10 ? 1.010 : (totMin <= 12 ? 1.013 : (totMin <= 14 ? 1.014 : (totMin <= 16 ? 1.016 : (totMin <= 18 ? 1.018 : 1.020)))))));
+            if (s === 4) return totMin <= 6 ? 1.0 : (totMin <= 8 ? 1.005 : (totMin <= 10 ? 1.008 : (totMin <= 12 ? 1.010 : (totMin <= 14 ? 1.013 : (totMin <= 16 ? 1.016 : (totMin <= 18 ? 1.018 : (totMin <= 20 ? 1.020 : (totMin <= 22 ? 1.023 : (totMin <= 24 ? 1.026 : (totMin <= 28 ? 1.030 : 1.035))))))))));
+            if (s >= 5) return totMin <= 8 ? 1.0 : (totMin <= 12 ? 1.002 : (totMin <= 16 ? 1.005 : (totMin <= 18 ? 1.010 : (totMin <= 20 ? 1.012 : (totMin <= 22 ? 1.015 : (totMin <= 24 ? 1.020 : (totMin <= 28 ? 1.025 : 1.035)))))));
             return 1.0;
         }
 
-        function getFIx(seconds) {
-            const entry = FIX_LOOKUP.find(e => seconds <= e.l);
-            return entry ? entry.v : 2.05;
-        }
-
         function calcTGL(player) {
-            let tglAccumulated = 0;
-            let totMinBefore = 0;
-            let allStints = [];
-
+            let tgl = 0, totMinBefore = 0, stints = [];
             player.performance.forEach(perf => {
-                const qDur = QUARTER_DURATIONS_MS[perf.quarter];
                 perf.rotations.forEach(r => {
-                    let durationMs = 0;
-                    if (r.end !== null) durationMs = r.end - r.start;
-                    else if (perf.quarter === gameState.currentQuarter && player.status === 'court') {
-                        durationMs = (QUARTER_DURATIONS_MS[gameState.currentQuarter] - gameState.quarterTimes[gameState.currentQuarter]) - r.start;
-                    }
-                    if (durationMs > 0) allStints.push(durationMs / 1000);
+                    let d = r.end !== null ? r.end - r.start : (perf.quarter === gameState.currentQuarter && player.status === 'court' ? (600000 - gameState.quarterTimes[gameState.currentQuarter]) - r.start : 0);
+                    if (d > 0) stints.push(d / 1000);
                 });
             });
-
-            allStints.forEach((sec, idx) => {
-                const fix = getFIx(sec);
-                const mult = getFatigueMultiplier(idx, totMinBefore);
-                tglAccumulated += (sec * fix * mult);
+            stints.forEach((sec, i) => {
+                const fix = (FIX_LOOKUP.find(e => sec <= e.l) || {v:2.12}).v;
+                tgl += (sec * fix * getFatigueMultiplier(i, totMinBefore));
                 totMinBefore += (sec / 60);
             });
-            return Math.round(tglAccumulated);
+            return Math.round(tgl);
         }
 
-        // --- FUNZIONI CORE (IDENTICHE AL BACKUP) ---
+        function calcTotalMs(player) {
+            return player.performance.reduce((acc, p) => acc + p.rotations.reduce((rAcc, r) => {
+                let d = r.end !== null ? r.end - r.start : (p.quarter === gameState.currentQuarter && player.status === 'court' ? (600000 - gameState.quarterTimes[gameState.currentQuarter]) - r.start : 0);
+                return rAcc + d;
+            }, 0), 0);
+        }
+
+        function getCurrentStintMs(player) {
+            if (player.status !== 'court') return 0;
+            const perf = player.performance.find(p => p.quarter === gameState.currentQuarter);
+            if (!perf) return 0;
+            const last = perf.rotations[perf.rotations.length - 1];
+            return (last && last.end === null) ? (600000 - gameState.remainingTime_internal) - last.start : 0;
+        }
+
+        // --- CORE FUNCTIONS ---
         function toggleTimer() {
-            if (gameState.isRunning) {
-                clearInterval(timerInterval);
-                gameState.isRunning = false;
-                document.getElementById('start-pause-btn').innerText = 'Avvia';
-                document.getElementById('start-pause-btn').className = 'bg-green-600 text-white font-bold py-3 px-6 rounded-xl w-28';
-            } else {
-                gameState.lastUpdateTime = Date.now();
-                timerInterval = setInterval(updateTimer, 100);
-                gameState.isRunning = true;
-                document.getElementById('start-pause-btn').innerText = 'Pausa';
-                document.getElementById('start-pause-btn').className = 'bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl w-28';
-            }
-            saveState();
+            if (gameState.isRunning) { clearInterval(timerInterval); gameState.isRunning = false; }
+            else { gameState.lastUpdateTime = Date.now(); timerInterval = setInterval(updateTimer, 100); gameState.isRunning = true; }
+            document.getElementById('start-pause-btn').innerText = gameState.isRunning ? 'Pausa' : 'Avvia';
+            document.getElementById('start-pause-btn').className = gameState.isRunning ? 'bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl w-28' : 'bg-green-600 text-white font-bold py-3 px-6 rounded-xl w-28';
         }
 
         function updateTimer() {
-            const now = Date.now();
-            const delta = now - gameState.lastUpdateTime;
-            gameState.lastUpdateTime = now;
-            let rem = gameState.quarterTimes[gameState.currentQuarter] - delta;
-            if (rem <= 0) { rem = 0; toggleTimer(); }
-            gameState.quarterTimes[gameState.currentQuarter] = rem;
+            const delta = Date.now() - gameState.lastUpdateTime;
+            gameState.lastUpdateTime = Date.now();
+            gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, gameState.quarterTimes[gameState.currentQuarter] - delta);
+            if (gameState.quarterTimes[gameState.currentQuarter] === 0) toggleTimer();
             updateUI();
         }
 
         function handlePlayerClick(id) {
-            const player = gameState.players.find(p => p.id === id);
-            const now = QUARTER_DURATIONS_MS[gameState.currentQuarter] - gameState.quarterTimes[gameState.currentQuarter];
-
-            if (player.status === 'bench') {
-                if (gameState.players.filter(p => p.status === 'court').length >= 5) return;
-                player.status = 'court';
-                let perf = player.performance.find(p => p.quarter === gameState.currentQuarter);
-                if (!perf) { perf = { quarter: gameState.currentQuarter, rotations: [] }; player.performance.push(perf); }
+            const p = gameState.players.find(x => x.id === id);
+            const now = 600000 - gameState.quarterTimes[gameState.currentQuarter];
+            if (p.status === 'bench') {
+                if (gameState.players.filter(x => x.status === 'court').length >= 5) return;
+                p.status = 'court';
+                let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
+                if (!perf) { perf = { quarter: gameState.currentQuarter, rotations: [] }; p.performance.push(perf); }
                 perf.rotations.push({ start: now, end: null });
             } else {
-                player.status = 'bench';
-                let perf = player.performance.find(p => p.quarter === gameState.currentQuarter);
-                if (perf) {
-                    let last = perf.rotations[perf.rotations.length - 1];
-                    if (last && last.end === null) last.end = now;
-                }
+                p.status = 'bench';
+                let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
+                if (perf) { let last = perf.rotations[perf.rotations.length - 1]; if (last && last.end === null) last.end = now; }
             }
-            saveState();
             updateUI();
+            localStorage.setItem('basket_rotation_fivein_v1', JSON.stringify(gameState));
         }
 
         function updateUI() {
+            gameState.remainingTime_internal = gameState.quarterTimes[gameState.currentQuarter];
             document.getElementById('timer-display').innerText = formatTime(gameState.quarterTimes[gameState.currentQuarter]);
-            const court = document.getElementById('court-area');
-            const bench = document.getElementById('bench-area');
+            const court = document.getElementById('court-area'), bench = document.getElementById('bench-area');
             court.innerHTML = ''; bench.innerHTML = '';
 
             gameState.players.forEach(p => {
-                const tgl = calcTGL(p);
+                const tgl = calcTGL(p), tot = calcTotalMs(p), stint = getCurrentStintMs(p);
                 let color = 'text-green-600';
-                if (tgl > 4832) color = 'text-red-600';
-                else if (tgl > 3695) color = 'text-orange-500';
-                else if (tgl > 2274) color = 'text-yellow-500';
+                if (tgl > 4832) color = 'text-red-600'; else if (tgl > 3695) color = 'text-orange-500'; else if (tgl > 2274) color = 'text-yellow-500';
 
                 const card = `
                     <div onclick="handlePlayerClick(${p.id})" class="player-card ${p.status === 'court' ? 'on-court' : ''} p-4 flex flex-col justify-between">
@@ -311,25 +233,30 @@
                             <span class="court-number font-black">${p.number}</span>
                             <div class="text-right"><p class="text-[10px] uppercase font-bold opacity-60">Load</p><p class="text-lg font-black ${color}">${tgl}</p></div>
                         </div>
-                        <h3 class="font-bold text-sm truncate">${p.name}</h3>
+                        <div class="mt-1">
+                            <h3 class="font-bold text-sm truncate">${p.name}</h3>
+                            <div class="flex justify-between items-end mt-1">
+                                <p class="text-[10px] font-mono opacity-80">TOT: ${formatTime(tot)}</p>
+                                ${p.status === 'court' ? `<p class="text-[10px] font-mono ${stint > 420000 ? 'text-red-400 animate-pulse font-bold' : 'opacity-80'}">STINT: ${formatTime(stint)}</p>` : ''}
+                            </div>
+                        </div>
                     </div>`;
-                if (p.status === 'court') court.innerHTML += card;
-                else bench.innerHTML += card;
+                p.status === 'court' ? court.innerHTML += card : bench.innerHTML += card;
             });
             renderTable();
         }
 
         function renderTable() {
-            let html = `<table class="w-full text-left text-xs"><thead class="sticky top-0 bg-white dark:bg-gray-800 z-10 border-b">
-                <tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Nome</th><th class="px-4 py-2 text-right">Q1</th><th class="px-4 py-2 text-right">Q2</th><th class="px-4 py-2 text-right">Q3</th><th class="px-4 py-2 text-right">Q4</th><th class="px-4 py-2 text-right">TGL</th></tr></thead><tbody>`;
+            let html = `<table class="w-full text-left text-xs"><thead class="sticky top-0 bg-white dark:bg-gray-800 border-b"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Nome</th><th class="px-4 py-2 text-right">Q1</th><th class="px-4 py-2 text-right">Q2</th><th class="px-4 py-2 text-right">Q3</th><th class="px-4 py-2 text-right">Q4</th><th class="px-4 py-2 text-right font-bold">TOT</th><th class="px-4 py-2 text-right font-bold">TGL</th></tr></thead><tbody>`;
             gameState.players.forEach(p => {
-                html += `<tr class="stats-row">
+                html += `<tr class="border-b dark:border-gray-700">
                     <td class="px-4 py-2 font-bold">${p.number}</td>
                     <td class="px-4 py-2">${p.name}</td>
                     <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q1'))}</td>
                     <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q2'))}</td>
                     <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q3'))}</td>
                     <td class="px-4 py-2 text-right text-gray-500">${formatTime(calcQuarterMs(p, 'Q4'))}</td>
+                    <td class="px-4 py-2 text-right font-bold">${formatTime(calcTotalMs(p))}</td>
                     <td class="px-4 py-2 text-right font-bold">${calcTGL(p)}</td>
                 </tr>`;
             });
@@ -340,59 +267,32 @@
             const perf = p.performance.find(x => x.quarter === q);
             if (!perf) return 0;
             return perf.rotations.reduce((acc, r) => {
-                const end = r.end !== null ? r.end : (gameState.currentQuarter === q ? (QUARTER_DURATIONS_MS[q] - gameState.quarterTimes[q]) : QUARTER_DURATIONS_MS[q]);
+                let end = r.end !== null ? r.end : (q === gameState.currentQuarter ? 600000 - gameState.quarterTimes[q] : 600000);
                 return acc + (end - r.start);
             }, 0);
         }
 
-        function formatTime(ms) {
-            const s = Math.floor(ms / 1000);
-            return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-        }
-
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        }
+        function formatTime(ms) { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; }
+        function toggleTheme() { document.documentElement.classList.toggle('dark'); }
+        function changeQuarter() { gameState.currentQuarter = document.getElementById('quarter-select').value; updateUI(); }
+        function adjustTime(ms) { gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, Math.min(600000, gameState.quarterTimes[gameState.currentQuarter] + ms)); updateUI(); }
 
         function initializeGame() {
-            const input = document.getElementById('player-input').value;
-            const lines = input.split('\n');
+            const lines = document.getElementById('player-input').value.split('\n');
             gameState.players = lines.map((l, i) => {
                 const parts = l.trim().split(/[ .]+/);
-                return { id: i, number: parts[0] || '??', name: parts.slice(1).join(' ') || 'Giocatore', status: 'bench', performance: [] };
+                return { id: i, number: parts[0] || '??', name: parts.slice(1).join(' '), status: 'bench', performance: [] };
             }).filter(p => p.name);
-            QUARTER_ORDER.forEach(q => gameState.quarterTimes[q] = QUARTER_DURATIONS_MS[q]);
-            showSetupOrGame(true);
-            saveState();
+            ['Q1','Q2','Q3','Q4','OT'].forEach(q => gameState.quarterTimes[q] = 600000);
+            document.getElementById('setup-modal').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
             updateUI();
         }
-
-        function showSetupOrGame(isGame) {
-            document.getElementById('setup-modal').classList.toggle('hidden', isGame);
-            document.getElementById('game-container').classList.toggle('hidden', !isGame);
-        }
-
-        function changeQuarter() {
-            gameState.currentQuarter = document.getElementById('quarter-select').value;
-            updateUI();
-        }
-
-        function adjustTime(ms) {
-            gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, Math.min(QUARTER_DURATIONS_MS[gameState.currentQuarter], gameState.quarterTimes[gameState.currentQuarter] + ms));
-            updateUI();
-        }
-
-        function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState)); }
 
         window.onload = () => {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                gameState = JSON.parse(saved);
-                showSetupOrGame(true);
-                updateUI();
-            } else showSetupOrGame(false);
-            if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+            const saved = localStorage.getItem('basket_rotation_fivein_v1');
+            if (saved) { gameState = JSON.parse(saved); document.getElementById('game-container').classList.remove('hidden'); updateUI(); }
+            else document.getElementById('setup-modal').classList.remove('hidden');
         };
     </script>
 </body>

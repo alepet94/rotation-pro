@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FiveIN</title>
+    <title>FiveIN - Pro Rotation Tracker</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏀</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,76 +17,65 @@
     <style>
         @font-face {
             font-family: 'DS-Digital';
-            src: url('DS-DIGII.TTF') format('truetype');
+            src: url('https://fonts.cdnfonts.com/s/14352/DS-DIGI.woff') format('woff');
             font-weight: normal; font-style: normal;
         }
-
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         
-        body { font-family: 'Inter', sans-serif; overscroll-behavior-y: contain; transition: background-color 0.3s, color 0.3s; }
+        body { font-family: 'Inter', sans-serif; overscroll-behavior-y: contain; }
         
         .court-area {
             background-color: #eebb88;
             background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 58px, rgba(160, 82, 45, 0.15) 59px, rgba(160, 82, 45, 0.15) 60px), repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 30px, transparent 30px, transparent 60px);
-            border: 6px solid #ffffff; box-shadow: inset 0 0 60px rgba(0,0,0,0.15); position: relative; min-height: 400px;
+            border: 6px solid #ffffff; box-shadow: inset 0 0 60px rgba(0,0,0,0.15); position: relative; min-height: 420px;
         }
-        .court-lines::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: #ffffff; pointer-events: none; z-index: 1; }
-        .court-lines::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border: 4px solid #ffffff; border-radius: 50%; pointer-events: none; z-index: 1; }
         .dark .court-area { background-color: #cfa06b; border-color: #e2e8f0; }
         
         .bench-area {
-            background-color: #f8fafc;
-            background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%, #e2e8f0), linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 75%, #e2e8f0 75%, #e2e8f0);
-            background-size: 20px 20px; border: 2px dashed #94a3b8; min-height: 140px;
+            background-color: #f8fafc; border: 2px dashed #94a3b8; min-height: 140px;
         }
-        .dark .bench-area { background-color: #1e293b; background-image: linear-gradient(45deg, #334155 25%, transparent 25%, transparent 75%, #334155 75%, #334155), linear-gradient(45deg, #334155 25%, transparent 25%, transparent 75%, #334155 75%, #334155); border-color: #475569; }
+        .dark .bench-area { background-color: #1e293b; border-color: #475569; }
         
-        .player-card { touch-action: manipulation; cursor: pointer; background: rgba(255, 255, 255, 0.98); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.15s ease, box-shadow 0.15s; z-index: 10; position: relative; min-height: 10rem; height: auto; user-select: none; border: 1px solid rgba(0,0,0,0.05); }
-        .player-card.on-court { background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: white; box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4); }
-        .dark .player-card:not(.on-court) { background: rgba(30, 41, 59, 0.98); color: #f1f5f9; border-color: rgba(255,255,255,0.1); }
+        .player-card { touch-action: manipulation; cursor: pointer; transition: transform 0.1s; z-index: 10; border: 1px solid rgba(0,0,0,0.1); }
+        .player-card.on-court { background: #1e293b; color: white; border: 1px solid #475569; }
+        .dark .player-card:not(.on-court) { background: #111827; color: #f1f5f9; }
         
-        .selected-card { 
-            outline: 5px solid #ccff00 !important; 
-            outline-offset: 2px;
-            box-shadow: 0 0 25px #ccff00 !important; 
-            transform: scale(1.05); 
-            z-index: 50; 
-        }
+        .selected-card { outline: 5px solid #ccff00 !important; transform: scale(1.05); z-index: 50; }
 
-        .court-number { color: #fbbf24; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-weight: 900; }
-        .timer-display { font-family: 'DS-Digital', 'Courier New', monospace; font-weight: 700; font-size: 3rem; line-height: 1; letter-spacing: -2px; color: #ef4444; }
+        .timer-display { font-family: 'DS-Digital', monospace; font-size: 3.5rem; color: #ef4444; line-height: 1; }
         
-        /* BOX DATI TEMPO */
-        .time-box { background: rgba(0,0,0,0.05); border-radius: 6px; padding: 4px 6px; }
-        .on-court .time-box { background: rgba(255,255,255,0.1); }
-        .dark .time-box { background: rgba(255,255,255,0.05); }
+        /* BOX DATI TEMPO NELLE SCHEDE */
+        .time-box { background: rgba(0,0,0,0.05); border-radius: 6px; padding: 4px; border: 1px solid rgba(0,0,0,0.05); }
+        .on-court .time-box { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* TIMELINE GRAFICA */
+        .timeline-bar { height: 12px; border-radius: 4px; position: relative; background: #e2e8f0; }
+        .dark .timeline-bar { background: #334155; }
+        .stint-segment { position: absolute; height: 100%; background: #3b82f6; border-right: 1px solid rgba(255,255,255,0.3); }
 
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
     </style>
 </head>
-<body class="p-2 sm:p-6 bg-gray-100 dark:bg-gray-900 select-none h-screen flex flex-col">
+<body class="p-2 sm:p-4 bg-gray-100 dark:bg-gray-900 select-none min-h-screen">
 
-    <div class="max-w-7xl mx-auto w-full flex flex-col h-full safe-area-padding">
+    <div class="max-w-7xl mx-auto flex flex-col gap-4">
         
-        <header class="flex justify-between items-center mb-3 py-2 flex-shrink-0 flex-wrap gap-4">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4 flex-1">
-                <div><h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white tracking-tight">🏀 FiveIN</h1></div>
-                <div class="mt-2 sm:mt-0 flex items-center">
-                    <label class="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0">Avversaria:</label>
-                    <input type="text" id="opponent-name" placeholder="Nome Squadra" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white font-medium text-sm py-1 px-2 rounded-lg outline-none w-full max-w-xs">
-                </div>
+        <header class="flex justify-between items-center py-2">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-black text-gray-800 dark:text-white">🏀 FiveIN</h1>
+                <input type="text" id="opponent-name" placeholder="Avversaria" class="bg-white dark:bg-gray-700 border dark:border-gray-600 text-sm py-1 px-3 rounded-lg outline-none text-white">
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="exportToCSV()" class="p-2 rounded-full bg-blue-600 text-white shadow-sm text-xs font-bold uppercase">CSV</button>
-                <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-yellow-400">🌙/☀️</button>
+            <div class="flex gap-2">
+                <button onclick="exportToCSV()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider shadow-lg transition">Scarica CSV</button>
+                <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm text-yellow-500">🌙</button>
             </div>
         </header>
 
-        <div id="setup-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl w-full max-w-md">
-                <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Roster Squadra</h2>
-                <textarea id="player-input" rows="8" class="w-full p-4 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:text-white">00 Leardini
+        <div id="setup-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] hidden">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+                <h2 class="text-xl font-bold mb-4 dark:text-white">Inserisci Roster (N. Nome)</h2>
+                <textarea id="player-input" rows="10" class="w-full p-4 border rounded-xl bg-gray-50 dark:bg-gray-700 dark:text-white font-mono text-sm">00 Leardini
 7 Tomassini
 11 Denegri
 12 Sankare
@@ -96,42 +85,52 @@
 22 Robinson
 27 Simioni
 29 Camara</textarea>
-                <button onclick="initializeGame()" class="mt-4 w-full bg-blue-600 text-white font-bold py-4 rounded-xl">Inizia Partita</button>
+                <button onclick="initializeGame()" class="mt-4 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition">INIZIA PARTITA</button>
             </div>
         </div>
 
-        <div id="game-container" class="flex-1 flex flex-col min-h-0 pb-4 hidden">
-            <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm mb-4 flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 border border-gray-200 dark:border-gray-700">
-                <div class="flex-1 flex justify-center items-center gap-3 order-1 sm:order-2">
-                    <button onclick="adjustTime(30000)" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 font-bold text-xs">+30"</button>
-                    <div class="bg-gray-100 dark:bg-gray-900 px-6 py-2 rounded-xl border border-gray-200 dark:border-gray-700 min-w-[200px] text-center">
+        <div id="game-container" class="hidden flex flex-col gap-4">
+            
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="adjustTime(30000)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 font-bold text-gray-500 text-xs">+30"</button>
+                    <div class="text-center min-w-[160px]">
                         <span id="timer-display" class="timer-display">10:00</span>
                     </div>
-                    <button onclick="adjustTime(-30000)" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 font-bold text-xs">-30"</button>
+                    <button onclick="adjustTime(-30000)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 font-bold text-gray-500 text-xs">-30"</button>
                 </div>
-                <div class="order-2 sm:order-3">
-                    <select id="quarter-select" onchange="changeQuarter()" class="bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 text-gray-800 dark:text-white font-bold text-lg py-3 px-4 rounded-xl outline-none">
-                        <option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option><option value="OT">OT</option>
-                    </select>
-                </div>
-                <div class="flex gap-2 order-3 sm:order-1">
-                    <button id="start-pause-btn" onclick="toggleTimer()" class="bg-green-600 text-white font-bold py-3 px-4 rounded-xl w-24">Avvia</button>
-                    <button id="undo-btn" onclick="undoSubstitution()" class="bg-orange-500 text-white font-bold py-3 px-4 rounded-xl w-24 opacity-50 cursor-not-allowed">UNDO</button>
-                    <button onclick="localStorage.removeItem('basket_rotation_fivein_v1'); location.reload();" class="bg-red-500 text-white font-bold py-3 px-4 rounded-xl w-24">Reset</button>
+
+                <select id="quarter-select" onchange="changeQuarter()" class="bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 text-gray-800 dark:text-white font-black text-xl py-2 px-4 rounded-xl outline-none">
+                    <option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option><option value="OT">OT</option>
+                </select>
+
+                <div class="flex gap-2">
+                    <button id="start-pause-btn" onclick="toggleTimer()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-xl min-w-[100px] shadow-md">AVVIA</button>
+                    <button id="undo-btn" onclick="undoSubstitution()" class="bg-orange-500 text-white font-bold py-3 px-6 rounded-xl opacity-50 cursor-not-allowed">UNDO</button>
+                    <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" class="bg-red-500 text-white font-bold py-3 px-4 rounded-xl">RESET</button>
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
-                <div class="lg:col-span-3 flex flex-col min-h-0 order-2 lg:order-1">
-                    <div id="bench-area" class="bench-area p-3 rounded-xl flex-1 overflow-y-auto grid grid-cols-2 lg:grid-cols-1 gap-3 content-start"></div>
-                </div>
-                <div class="lg:col-span-9 flex flex-col min-h-0 order-1 lg:order-2 space-y-4">
-                    <div class="relative rounded-2xl overflow-hidden shadow-2xl border-[6px] border-white dark:border-gray-500 flex-1 flex flex-col">
-                        <div class="court-lines absolute inset-0 z-0"></div>
-                        <div id="court-area" class="court-area relative z-10 p-4 sm:p-6 flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 content-start items-start"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div id="bench-area" class="lg:col-span-3 bench-area p-3 rounded-2xl grid grid-cols-2 lg:grid-cols-1 gap-2 overflow-y-auto max-h-[600px] custom-scroll"></div>
+                
+                <div class="lg:col-span-9 flex flex-col gap-4">
+                    <div class="court-area rounded-3xl p-6 relative">
+                        <div id="court-area" class="relative z-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 h-full items-start"></div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-48 lg:h-64 overflow-hidden">
-                        <div id="total-stats-area" class="overflow-y-auto custom-scroll p-0 flex-1"></div>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div id="total-stats-area" class="overflow-x-auto custom-scroll"></div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Timeline Rotazioni Squadra</h3>
+                            <div id="rotation-timeline" class="space-y-2"></div>
+                            <div class="flex justify-between mt-2 text-[9px] font-mono text-gray-500 border-t pt-1">
+                                <span>0'</span><span>10'</span><span>20'</span><span>30'</span><span>40'</span><span>OT</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -221,7 +220,7 @@
             perfIn.rotations.push({ start: now, end: null });
             benchP.status = 'court';
 
-            localStorage.setItem('basket_rotation_fivein_v1', JSON.stringify(gameState));
+            localStorage.setItem('basket_rotation_fivein_v2', JSON.stringify(gameState));
         }
 
         function saveToHistory() {
@@ -235,7 +234,7 @@
                 gameState = history.pop();
                 updateUI();
                 updateUndoButton();
-                localStorage.setItem('basket_rotation_fivein_v1', JSON.stringify(gameState));
+                localStorage.setItem('basket_rotation_fivein_v2', JSON.stringify(gameState));
             }
         }
 
@@ -248,41 +247,48 @@
         function toggleTimer() {
             if (gameState.isRunning) { clearInterval(timerInterval); gameState.isRunning = false; }
             else { gameState.lastUpdateTime = Date.now(); timerInterval = setInterval(updateTimer, 100); gameState.isRunning = true; }
-            document.getElementById('start-pause-btn').innerText = gameState.isRunning ? 'Pausa' : 'Avvia';
-            document.getElementById('start-pause-btn').className = gameState.isRunning ? 'bg-yellow-600 text-white font-bold py-3 px-4 rounded-xl w-24' : 'bg-green-600 text-white font-bold py-3 px-4 rounded-xl w-24';
+            document.getElementById('start-pause-btn').innerText = gameState.isRunning ? 'PAUSA' : 'AVVIA';
+            document.getElementById('start-pause-btn').className = gameState.isRunning ? 'bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl min-w-[100px]' : 'bg-green-600 text-white font-bold py-3 px-6 rounded-xl min-w-[100px]';
         }
 
         function updateTimer() {
             const delta = Date.now() - gameState.lastUpdateTime;
             gameState.lastUpdateTime = Date.now();
             gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, gameState.quarterTimes[gameState.currentQuarter] - delta);
-            if (gameState.quarterTimes[gameState.currentQuarter] === 0) { toggleTimer(); handleQuarterEnd(); }
+            if (gameState.quarterTimes[gameState.currentQuarter] === 0) { toggleTimer(); }
             updateUI();
-        }
-
-        function handleQuarterEnd() {
-            const now = 600000;
-            gameState.players.filter(p => p.status === 'court').forEach(p => {
-                let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
-                if (perf) { let last = perf.rotations[perf.rotations.length - 1]; if (last && last.end === null) last.end = now; }
-            });
         }
 
         function changeQuarter() {
-            gameState.currentQuarter = document.getElementById('quarter-select').value;
-            const nowInQuarter = 600000 - gameState.quarterTimes[gameState.currentQuarter];
+            const oldQ = gameState.currentQuarter;
+            const newQ = document.getElementById('quarter-select').value;
+            
+            // Chiudi stint nel vecchio quarto per chi è in campo
             gameState.players.filter(p => p.status === 'court').forEach(p => {
-                let perf = p.performance.find(x => x.quarter === gameState.currentQuarter);
+                let perf = p.performance.find(x => x.quarter === oldQ);
+                if (perf) {
+                    let last = perf.rotations[perf.rotations.length - 1];
+                    if (last && last.end === null) last.end = 600000 - gameState.quarterTimes[oldQ];
+                }
+            });
+
+            gameState.currentQuarter = newQ;
+            const nowInNew = 600000 - gameState.quarterTimes[newQ];
+
+            // Apri stint nel nuovo quarto
+            gameState.players.filter(p => p.status === 'court').forEach(p => {
+                let perf = p.performance.find(x => x.quarter === newQ);
                 if (!perf) {
-                    perf = { quarter: gameState.currentQuarter, rotations: [{ start: nowInQuarter, end: null }] };
+                    perf = { quarter: newQ, rotations: [{ start: nowInNew, end: null }] };
                     p.performance.push(perf);
                 } else {
                     let last = perf.rotations[perf.rotations.length - 1];
-                    if (!last || last.end !== null) { perf.rotations.push({ start: nowInQuarter, end: null }); }
+                    if (!last || last.end !== null) perf.rotations.push({ start: nowInNew, end: null });
                 }
             });
+
             updateUI();
-            localStorage.setItem('basket_rotation_fivein_v1', JSON.stringify(gameState));
+            localStorage.setItem('basket_rotation_fivein_v2', JSON.stringify(gameState));
         }
 
         function updateUI() {
@@ -296,51 +302,88 @@
                 if (tgl > 4832) tglColor = 'text-red-600'; else if (tgl > 3695) tglColor = 'text-orange-500'; else if (tgl > 2274) tglColor = 'text-yellow-500';
 
                 const card = `
-                    <div onclick="handlePlayerClick(${p.id})" class="player-card ${p.status === 'court' ? 'on-court' : ''} ${selectedPlayerId === p.id ? 'selected-card' : ''} p-4 flex flex-col">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="court-number">${p.number}</span>
+                    <div onclick="handlePlayerClick(${p.id})" class="player-card ${p.status === 'court' ? 'on-court' : ''} ${selectedPlayerId === p.id ? 'selected-card' : ''} p-4 rounded-xl flex flex-col justify-between shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-start">
+                            <span class="text-2xl font-black ${p.status === 'court' ? 'text-yellow-400' : 'text-gray-400'}">${p.number}</span>
                             <div class="text-right">
-                                <p class="text-[9px] uppercase font-bold opacity-60">Load</p>
+                                <p class="text-[8px] uppercase font-black opacity-50">Load</p>
                                 <p class="text-xl font-black ${tglColor}">${tgl}</p>
                             </div>
                         </div>
-                        
-                        <div class="flex-1">
-                            <h3 class="font-bold text-sm leading-tight mb-2 truncate">${p.name}</h3>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 mt-auto">
-                            <div class="time-box flex flex-col justify-center">
-                                <span class="text-[8px] uppercase font-bold opacity-50">Total</span>
+                        <h3 class="font-bold text-sm truncate my-2">${p.name}</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="time-box flex flex-col items-center">
+                                <span class="text-[7px] uppercase font-bold opacity-60">Total</span>
                                 <span class="text-xs font-mono font-black">${formatTime(tot)}</span>
                             </div>
-                            ${p.status === 'court' ? `
-                            <div class="time-box flex flex-col justify-center">
-                                <span class="text-[8px] uppercase font-bold opacity-50">Stint</span>
+                            <div class="time-box flex flex-col items-center ${p.status === 'court' ? '' : 'opacity-0'}">
+                                <span class="text-[7px] uppercase font-bold opacity-60">Stint</span>
                                 <span class="text-xs font-mono font-black ${stint > 420000 ? 'text-red-500 animate-pulse' : ''}">${formatTime(stint)}</span>
-                            </div>` : `<div class="opacity-0"></div>`}
+                            </div>
                         </div>
                     </div>`;
                 p.status === 'court' ? court.innerHTML += card : bench.innerHTML += card;
             });
             renderTable();
+            renderTimeline();
         }
 
         function renderTable() {
-            let html = `<table class="w-full text-left text-xs text-gray-800 dark:text-gray-200"><thead class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Nome</th><th class="px-4 py-2 text-right">Q1</th><th class="px-4 py-2 text-right">Q2</th><th class="px-4 py-2 text-right">Q3</th><th class="px-4 py-2 text-right">Q4</th><th class="px-4 py-2 text-right font-bold">TOT</th><th class="px-4 py-2 text-right font-bold">TGL</th></tr></thead><tbody>`;
+            let html = `<table class="w-full text-[11px] text-left dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 uppercase text-gray-500">
+                    <tr><th class="px-4 py-3">#</th><th class="px-4 py-3">Giocatore</th><th class="px-4 py-3 text-right">Q1</th><th class="px-4 py-3 text-right">Q2</th><th class="px-4 py-3 text-right">Q3</th><th class="px-4 py-3 text-right">Q4</th><th class="px-4 py-3 text-right font-black text-gray-800 dark:text-white">TOT</th><th class="px-4 py-3 text-right font-black">TGL</th></tr>
+                </thead><tbody>`;
             gameState.players.forEach(p => {
-                html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-                    <td class="px-4 py-2 font-bold">${p.number}</td>
-                    <td class="px-4 py-2">${p.name}</td>
+                html += `<tr class="border-b dark:border-gray-700/50">
+                    <td class="px-4 py-2 font-black text-yellow-500">${p.number}</td>
+                    <td class="px-4 py-2 font-bold">${p.name}</td>
                     <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q1'))}</td>
                     <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q2'))}</td>
                     <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q3'))}</td>
                     <td class="px-4 py-2 text-right opacity-60">${formatTime(calcQuarterMs(p, 'Q4'))}</td>
-                    <td class="px-4 py-2 text-right font-bold">${formatTime(calcTotalMs(p))}</td>
-                    <td class="px-4 py-2 text-right font-bold">${calcTGL(p)}</td>
+                    <td class="px-4 py-2 text-right font-black text-gray-900 dark:text-white">${formatTime(calcTotalMs(p))}</td>
+                    <td class="px-4 py-2 text-right font-black">${calcTGL(p)}</td>
                 </tr>`;
             });
             document.getElementById('total-stats-area').innerHTML = html + `</tbody></table>`;
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('rotation-timeline');
+            container.innerHTML = '';
+            const totalMs = 40 * 60000; // Scala su 40 minuti
+
+            gameState.players.forEach(p => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-3";
+                
+                const label = `<span class="w-6 text-[10px] font-black text-gray-500">${p.number}</span>`;
+                const bar = document.createElement('div');
+                bar.className = "timeline-bar flex-1";
+
+                p.performance.forEach(perf => {
+                    const qIdx = ['Q1','Q2','Q3','Q4'].indexOf(perf.quarter);
+                    if (qIdx === -1) return;
+                    const offset = qIdx * 600000;
+
+                    perf.rotations.forEach(r => {
+                        let end = r.end !== null ? r.end : (perf.quarter === gameState.currentQuarter ? 600000 - gameState.quarterTimes[perf.quarter] : 0);
+                        const startPct = ((offset + r.start) / totalMs) * 100;
+                        const widthPct = ((end - r.start) / totalMs) * 100;
+
+                        if (widthPct > 0) {
+                            const segment = document.createElement('div');
+                            segment.className = "stint-segment";
+                            segment.style.left = `${startPct}%`;
+                            segment.style.width = `${widthPct}%`;
+                            bar.appendChild(segment);
+                        }
+                    });
+                });
+                row.innerHTML = label;
+                row.appendChild(bar);
+                container.appendChild(row);
+            });
         }
 
         function calcQuarterMs(p, q) {
@@ -348,13 +391,58 @@
             if (!perf) return 0;
             return perf.rotations.reduce((acc, r) => {
                 let end = r.end !== null ? r.end : (q === gameState.currentQuarter ? 600000 - gameState.quarterTimes[q] : 0);
-                let dur = end - r.start;
-                return acc + (dur > 0 ? dur : 0);
+                return acc + Math.max(0, end - r.start);
             }, 0);
         }
 
-        function formatTime(ms) { const s = Math.floor(Math.max(0, ms) / 1000); return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; }
-        function adjustTime(ms) { gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, Math.min(600000, gameState.quarterTimes[gameState.currentQuarter] + ms)); updateUI(); }
+        function formatTime(ms) { 
+            const s = Math.floor(Math.max(0, ms) / 1000); 
+            return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; 
+        }
+
+        function adjustTime(ms) { 
+            gameState.quarterTimes[gameState.currentQuarter] = Math.max(0, Math.min(600000, gameState.quarterTimes[gameState.currentQuarter] + ms)); 
+            updateUI(); 
+        }
+
+        function getDetailedStints(player) {
+            let log = [];
+            player.performance.forEach(perf => {
+                perf.rotations.forEach(r => {
+                    let end = r.end !== null ? r.end : (perf.quarter === gameState.currentQuarter ? 600000 - gameState.quarterTimes[perf.quarter] : 0);
+                    // Formato orologio basket (10:00 -> 0:00)
+                    const startClock = formatTime(600000 - r.start);
+                    const endClock = formatTime(600000 - end);
+                    log.push(`${perf.quarter}: ${startClock}-${endClock}`);
+                });
+            });
+            return log.join(" | ");
+        }
+
+        function exportToCSV() {
+            let csv = "\uFEFFGiocatore;Numero;Q1;Q2;Q3;Q4;TOTALE;TGL;STINT DETTAGLIATI\n";
+            const opponent = document.getElementById('opponent-name').value || "Partita";
+
+            gameState.players.forEach(p => {
+                const row = [
+                    p.name, p.number,
+                    formatTime(calcQuarterMs(p, 'Q1')),
+                    formatTime(calcQuarterMs(p, 'Q2')),
+                    formatTime(calcQuarterMs(p, 'Q3')),
+                    formatTime(calcQuarterMs(p, 'Q4')),
+                    formatTime(calcTotalMs(p)),
+                    calcTGL(p),
+                    `"${getDetailedStints(p)}"`
+                ];
+                csv += row.join(";") + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Stats_${opponent}.csv`;
+            link.click();
+        }
 
         function initializeGame() {
             const lines = document.getElementById('player-input').value.split('\n');
@@ -370,7 +458,7 @@
         }
 
         window.onload = () => {
-            const saved = localStorage.getItem('basket_rotation_fivein_v1');
+            const saved = localStorage.getItem('basket_rotation_fivein_v2');
             if (saved) { gameState = JSON.parse(saved); document.getElementById('game-container').classList.remove('hidden'); updateUI(); }
             else document.getElementById('setup-modal').classList.remove('hidden');
         };

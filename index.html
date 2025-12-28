@@ -24,6 +24,7 @@
         
         body { font-family: 'Inter', sans-serif; overscroll-behavior-y: contain; }
         
+        /* CAMPO */
         .court-area {
             background-color: #eebb88;
             background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 58px, rgba(160, 82, 45, 0.15) 59px, rgba(160, 82, 45, 0.15) 60px), repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 30px, transparent 30px, transparent 60px);
@@ -31,27 +32,24 @@
         }
         .dark .court-area { background-color: #cfa06b; border-color: #e2e8f0; }
         
-        .bench-area {
-            background-color: #f8fafc; border: 2px dashed #94a3b8; min-height: 140px;
-        }
-        .dark .bench-area { background-color: #1e293b; border-color: #475569; }
-        
+        /* SCHEDE */
         .player-card { touch-action: manipulation; cursor: pointer; transition: transform 0.1s; z-index: 10; border: 1px solid rgba(0,0,0,0.1); }
         .player-card.on-court { background: #1e293b; color: white; border: 1px solid #475569; }
         .dark .player-card:not(.on-court) { background: #111827; color: #f1f5f9; }
-        
         .selected-card { outline: 5px solid #ccff00 !important; transform: scale(1.05); z-index: 50; }
-
+        
         .timer-display { font-family: 'DS-Digital', monospace; font-size: 3.5rem; color: #ef4444; line-height: 1; }
         
         /* BOX DATI TEMPO NELLE SCHEDE */
         .time-box { background: rgba(0,0,0,0.05); border-radius: 6px; padding: 4px; border: 1px solid rgba(0,0,0,0.05); }
         .on-court .time-box { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); }
         
-        /* TIMELINE GRAFICA */
-        .timeline-bar { height: 12px; border-radius: 4px; position: relative; background: #e2e8f0; }
-        .dark .timeline-bar { background: #334155; }
-        .stint-segment { position: absolute; height: 100%; background: #3b82f6; border-right: 1px solid rgba(255,255,255,0.3); }
+        /* TIMELINE GRAFICA CON QUARTI */
+        .timeline-bar { height: 18px; border-radius: 4px; position: relative; background: #e2e8f0; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
+        .dark .timeline-bar { background: #1f2937; border-color: rgba(255,255,255,0.05); }
+        .stint-segment { position: absolute; height: 100%; background: #3b82f6; z-index: 10; }
+        .quarter-line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.2); z-index: 20; }
+        .dark .quarter-line { background: rgba(255,255,255,0.2); }
 
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
@@ -91,23 +89,25 @@
 
         <div id="game-container" class="hidden flex flex-col gap-4">
             
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4">
-                <div class="flex items-center gap-3">
+            <div class="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
+                <div class="flex gap-2 order-3 sm:order-1">
+                    <button id="start-pause-btn" onclick="toggleTimer()" class="bg-green-600 text-white font-bold py-3 px-4 rounded-xl w-24 shadow-md">AVVIA</button>
+                    <button id="undo-btn" onclick="undoSubstitution()" class="bg-orange-500 text-white font-bold py-3 px-4 rounded-xl w-24 opacity-50 cursor-not-allowed">UNDO</button>
+                    <button onclick="if(confirm('Reset?')) { localStorage.clear(); location.reload(); }" class="bg-red-500 text-white font-bold py-3 px-4 rounded-xl">RESET</button>
+                </div>
+
+                <div class="flex-1 flex justify-center items-center gap-3 order-1 sm:order-2">
                     <button onclick="adjustTime(30000)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 font-bold text-gray-500 text-xs">+30"</button>
-                    <div class="text-center min-w-[160px]">
+                    <div class="text-center min-w-[200px]">
                         <span id="timer-display" class="timer-display">10:00</span>
                     </div>
                     <button onclick="adjustTime(-30000)" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 font-bold text-gray-500 text-xs">-30"</button>
                 </div>
 
-                <select id="quarter-select" onchange="changeQuarter()" class="bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 text-gray-800 dark:text-white font-black text-xl py-2 px-4 rounded-xl outline-none">
-                    <option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option><option value="OT">OT</option>
-                </select>
-
-                <div class="flex gap-2">
-                    <button id="start-pause-btn" onclick="toggleTimer()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-xl min-w-[100px] shadow-md">AVVIA</button>
-                    <button id="undo-btn" onclick="undoSubstitution()" class="bg-orange-500 text-white font-bold py-3 px-6 rounded-xl opacity-50 cursor-not-allowed">UNDO</button>
-                    <button onclick="if(confirm('Resettare tutto?')) { localStorage.clear(); location.reload(); }" class="bg-red-500 text-white font-bold py-3 px-4 rounded-xl">RESET</button>
+                <div class="order-2 sm:order-3">
+                    <select id="quarter-select" onchange="changeQuarter()" class="bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 text-gray-800 dark:text-white font-black text-xl py-2 px-4 rounded-xl outline-none">
+                        <option value="Q1">Q1</option><option value="Q2">Q2</option><option value="Q3">Q3</option><option value="Q4">Q4</option><option value="OT">OT</option>
+                    </select>
                 </div>
             </div>
             
@@ -124,11 +124,20 @@
                             <div id="total-stats-area" class="overflow-x-auto custom-scroll"></div>
                         </div>
 
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
-                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Timeline Rotazioni Squadra</h3>
-                            <div id="rotation-timeline" class="space-y-2"></div>
-                            <div class="flex justify-between mt-2 text-[9px] font-mono text-gray-500 border-t pt-1">
-                                <span>0'</span><span>10'</span><span>20'</span><span>30'</span><span>40'</span><span>OT</span>
+                        <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Dettaglio Rotazioni (4 Quarti)</h3>
+                                <div class="flex gap-4 text-[9px] font-bold text-gray-400 uppercase">
+                                    <span>Q1</span><span>Q2</span><span>Q3</span><span>Q4</span>
+                                </div>
+                            </div>
+                            <div id="rotation-timeline" class="space-y-3"></div>
+                            <div class="relative h-4 mt-2 border-t pt-1">
+                                <div class="absolute left-0 text-[9px] text-gray-500">0'</div>
+                                <div class="absolute left-1/4 text-[9px] text-gray-500">10'</div>
+                                <div class="absolute left-1/2 text-[9px] text-gray-500">20'</div>
+                                <div class="absolute left-3/4 text-[9px] text-gray-500">30'</div>
+                                <div class="absolute right-0 text-[9px] text-gray-500">40'</div>
                             </div>
                         </div>
                     </div>
@@ -248,7 +257,7 @@
             if (gameState.isRunning) { clearInterval(timerInterval); gameState.isRunning = false; }
             else { gameState.lastUpdateTime = Date.now(); timerInterval = setInterval(updateTimer, 100); gameState.isRunning = true; }
             document.getElementById('start-pause-btn').innerText = gameState.isRunning ? 'PAUSA' : 'AVVIA';
-            document.getElementById('start-pause-btn').className = gameState.isRunning ? 'bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl min-w-[100px]' : 'bg-green-600 text-white font-bold py-3 px-6 rounded-xl min-w-[100px]';
+            document.getElementById('start-pause-btn').className = gameState.isRunning ? 'bg-yellow-600 text-white font-bold py-3 px-4 rounded-xl w-24' : 'bg-green-600 text-white font-bold py-3 px-4 rounded-xl w-24';
         }
 
         function updateTimer() {
@@ -263,7 +272,6 @@
             const oldQ = gameState.currentQuarter;
             const newQ = document.getElementById('quarter-select').value;
             
-            // Chiudi stint nel vecchio quarto per chi è in campo
             gameState.players.filter(p => p.status === 'court').forEach(p => {
                 let perf = p.performance.find(x => x.quarter === oldQ);
                 if (perf) {
@@ -275,7 +283,6 @@
             gameState.currentQuarter = newQ;
             const nowInNew = 600000 - gameState.quarterTimes[newQ];
 
-            // Apri stint nel nuovo quarto
             gameState.players.filter(p => p.status === 'court').forEach(p => {
                 let perf = p.performance.find(x => x.quarter === newQ);
                 if (!perf) {
@@ -351,15 +358,22 @@
         function renderTimeline() {
             const container = document.getElementById('rotation-timeline');
             container.innerHTML = '';
-            const totalMs = 40 * 60000; // Scala su 40 minuti
+            const totalMs = 40 * 60000;
 
             gameState.players.forEach(p => {
                 const row = document.createElement('div');
                 row.className = "flex items-center gap-3";
-                
                 const label = `<span class="w-6 text-[10px] font-black text-gray-500">${p.number}</span>`;
                 const bar = document.createElement('div');
                 bar.className = "timeline-bar flex-1";
+
+                // Linee Quarti
+                [0.25, 0.5, 0.75].forEach(pos => {
+                    const line = document.createElement('div');
+                    line.className = "quarter-line";
+                    line.style.left = (pos * 100) + "%";
+                    bar.appendChild(line);
+                });
 
                 p.performance.forEach(perf => {
                     const qIdx = ['Q1','Q2','Q3','Q4'].indexOf(perf.quarter);
@@ -405,25 +419,19 @@
             updateUI(); 
         }
 
-        function getDetailedStints(player) {
-            let log = [];
-            player.performance.forEach(perf => {
-                perf.rotations.forEach(r => {
-                    let end = r.end !== null ? r.end : (perf.quarter === gameState.currentQuarter ? 600000 - gameState.quarterTimes[perf.quarter] : 0);
-                    // Formato orologio basket (10:00 -> 0:00)
-                    const startClock = formatTime(600000 - r.start);
-                    const endClock = formatTime(600000 - end);
-                    log.push(`${perf.quarter}: ${startClock}-${endClock}`);
-                });
-            });
-            return log.join(" | ");
-        }
-
         function exportToCSV() {
-            let csv = "\uFEFFGiocatore;Numero;Q1;Q2;Q3;Q4;TOTALE;TGL;STINT DETTAGLIATI\n";
+            let csv = "\uFEFFGiocatore;Numero;Q1;Q2;Q3;Q4;TOTALE;TGL;DETTAGLI STINT\n";
             const opponent = document.getElementById('opponent-name').value || "Partita";
 
             gameState.players.forEach(p => {
+                let stints = [];
+                p.performance.forEach(perf => {
+                    perf.rotations.forEach(r => {
+                        let end = r.end !== null ? r.end : (perf.quarter === gameState.currentQuarter ? 600000 - gameState.quarterTimes[perf.quarter] : 0);
+                        stints.push(`${perf.quarter}: ${formatTime(600000 - r.start)}-${formatTime(600000 - end)}`);
+                    });
+                });
+
                 const row = [
                     p.name, p.number,
                     formatTime(calcQuarterMs(p, 'Q1')),
@@ -432,7 +440,7 @@
                     formatTime(calcQuarterMs(p, 'Q4')),
                     formatTime(calcTotalMs(p)),
                     calcTGL(p),
-                    `"${getDetailedStints(p)}"`
+                    `"${stints.join(" | ")}"`
                 ];
                 csv += row.join(";") + "\n";
             });
